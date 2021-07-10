@@ -1,92 +1,55 @@
 'use strict';
 
-var app = angular.module('app', ['ngRoute', 'ngResource', 'ngCookies', 'ngSanitize', 'smart-table', 'ui.bootstrap', 'ngFileUpload', 'thatisuday.dropzone', 'angular-loading-bar']);
+let app = angular.module('app', ['ngRoute', 'ngResource', 'ngCookies', 'ngSanitize', 'smart-table', 'ui.bootstrap', 'ngFileUpload', 'thatisuday.dropzone']);
 
 app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvider', 'dropzoneOpsProvider',
     function ($provide, $routeProvider, $locationProvider, $resourceProvider, dropzoneOpsProvider) {
 
-        // enable HTML5mode to disable hashbang urls
+        //Enable HTML5mode to disable hashbang urls
         $locationProvider.html5Mode(true);
 
-        // Don't strip trailing slashes from calculated URLs
+        //Don't strip trailing slashes from calculated URLs
         $resourceProvider.defaults.stripTrailingSlashes = false;
 
-        // gets link from html (provided by Thymeleaf - server sided)
-        var ENDPOINT_URI = $('#ENDPOINT_URI').attr('href');
-        var BASE_URI = $('#BASE_URI').attr('href');
+        //Retrieves link from html (provided by Thymeleaf - server sided)
+        const ENDPOINT_URI = $('#ENDPOINT_URI').attr('href');
+        const BASE_URI = $('#BASE_URI').attr('href');
         $provide.value('ENDPOINT_URI', ENDPOINT_URI);
         $provide.value('BASE_URI', BASE_URI);
 
+        //Prefix for views
+        const viewPrefix = '/view';
+        //Define parameter types
+        const parameterTypes = ["Text", "Number", "Switch"];
+
+        //Set dropzone options
         dropzoneOpsProvider.setOptions({
             url: 'a',
             maxFilesize: '100',
             autoProcessQueue: false
         });
 
-        function redirectExpert($location, SessionService) {
-            if (!SessionService.isExpert()) {
-                $location.path('/');
-            }
-        }
-
-        var viewPrefix = '/view';
-        // configure the routing rules here
+        //Configure routing rules
         $routeProvider
-
-        // Home
+            // Home
             .when('/', {
                 templateUrl: 'templates/home',
                 controller: 'HomeController as ctrl',
                 resolve: {
-                    countActuators: ['CrudService', function (CrudService) {
-                        return CrudService.countItems('actuators').then(
-                            function (count) {
-                                return count;
-                            },
-                            function (response) {
-                                return 0;
-                            }
-                        );
+                    countEnvModels: ['HttpService', function (HttpService) {
+                        return HttpService.count('env-models');
                     }],
-                    countSensors: ['CrudService', function (CrudService) {
-                        return CrudService.countItems('sensors').then(
-                            function (count) {
-                                return count;
-                            },
-                            function (response) {
-                                return 0;
-                            }
-                        );
+                    countActuators: ['HttpService', function (HttpService) {
+                        return HttpService.count('actuators');
                     }],
-                    countDevices: ['CrudService', function (CrudService) {
-                        return CrudService.countItems('devices').then(
-                            function (count) {
-                                return count;
-                            },
-                            function (response) {
-                                return 0;
-                            }
-                        );
+                    countSensors: ['HttpService', function (HttpService) {
+                        return HttpService.count('sensors');
                     }],
-                    countAdapters: ['CrudService', function (CrudService) {
-                        return CrudService.countItems('adapters').then(
-                            function (count) {
-                                return count;
-                            },
-                            function (response) {
-                                return 0;
-                            }
-                        );
+                    countDevices: ['HttpService', function (HttpService) {
+                        return HttpService.count('devices');
                     }],
-                    countMonitoringAdapters: ['CrudService', function (CrudService) {
-                        return CrudService.countItems('monitoring-adapters').then(
-                            function (count) {
-                                return count;
-                            },
-                            function (response) {
-                                return 0;
-                            }
-                        );
+                    countPolicies: ['HttpService', function (HttpService) {
+                        return HttpService.count('policies');
                     }]
                 }
             })
@@ -105,17 +68,69 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
 
             // Users
             .when(viewPrefix + '/users', {
+                category: 'users',
                 templateUrl: 'templates/users',
-                controller: 'UsersController as vm'
+                controller: 'UserListController as ctrl',
+                resolve: {
+                    userList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('users');
+                    }],
+                    deleteUser: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'users');
+                    }],
+                }
             })
 
-            // Model
-            .when(viewPrefix + '/model', {
-                templateUrl: 'templates/model',
-                controller: 'ModelController as vm',
+            // Environment Model
+            .when(viewPrefix + '/env-models', {
+                category: 'env-models',
+                templateUrl: 'templates/env-models',
+                controller: 'EnvModelListController as ctrl',
                 resolve: {
-                    adapterList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('adapters');
+                    envModelList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('env-models', 'environmentModels');
+                    }],
+                    addEnvModel: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'env-models');
+                    }],
+                    updateEnvModel: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.updateOne, 'env-models');
+                    }],
+                    deleteEnvModel: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'env-models');
+                    }],
+                    keyPairList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('key-pairs');
+                    }],
+                    operatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('operators');
+                    }],
+                    deviceTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('device-types');
+                    }],
+                    actuatorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuator-types');
+                    }],
+                    sensorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensor-types');
+                    }]
+                }
+            })
+
+            // Key pairs list
+            .when(viewPrefix + '/key-pairs', {
+                category: 'key-pairs',
+                templateUrl: 'templates/key-pairs',
+                controller: 'KeyPairListController as ctrl',
+                resolve: {
+                    keyPairList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('key-pairs');
+                    }],
+                    addKeyPair: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'key-pairs');
+                    }],
+                    deleteKeyPair: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'key-pairs');
                     }]
                 }
             })
@@ -126,78 +141,78 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 templateUrl: 'templates/rules',
                 controller: 'RuleListController as ctrl',
                 resolve: {
-                    ruleList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('rules');
+                    ruleList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rules');
                     }],
-                    addRule: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.addItem, 'rules');
+                    addRule: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'rules');
                     }],
-                    deleteRule: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.deleteItem, 'rules');
+                    deleteRule: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'rules');
                     }],
-                    ruleActionList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('rule-actions');
+                    ruleActionList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rule-actions');
                     }],
-                    ruleTriggerList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('rule-triggers');
+                    ruleTriggerList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rule-triggers');
                     }]
                 }
             })
 
-            //Rule actions list
+            // Rule actions list
             .when(viewPrefix + '/rule-actions', {
                 category: 'rule-actions',
                 templateUrl: 'templates/rule-actions',
                 controller: 'RuleActionListController as ctrl',
                 resolve: {
-                    ruleActionList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('rule-actions');
+                    ruleActionList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rule-actions');
                     }],
                     ruleActionTypesList: ['RuleService', function (RuleService) {
                         return RuleService.getRuleActionTypes().then(function (response) {
-                            return response.data || [];
+                            return response || [];
                         });
                     }],
-                    actuatorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('actuators');
+                    actuatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuators');
                     }],
-                    sensorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('sensors');
+                    sensorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensors');
                     }],
-                    addRuleAction: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.addItem, 'rule-actions');
+                    addRuleAction: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'rule-actions');
                     }],
-                    deleteRuleAction: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.deleteItem, 'rule-actions');
+                    deleteRuleAction: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'rule-actions');
                     }]
                 }
             })
 
-            //Rule triggers list
+            // Rule triggers list
             .when(viewPrefix + '/rule-triggers', {
                 category: 'rule-triggers',
                 templateUrl: 'templates/rule-triggers',
                 controller: 'RuleTriggerListController as ctrl',
                 resolve: {
-                    ruleTriggerList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('rule-triggers');
+                    ruleTriggerList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rule-triggers');
                     }],
-                    addRuleTrigger: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.addItem, 'rule-triggers');
+                    addRuleTrigger: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'rule-triggers');
                     }],
-                    deleteRuleTrigger: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.deleteItem, 'rule-triggers');
+                    deleteRuleTrigger: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'rule-triggers');
                     }],
-                    actuatorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('actuators');
+                    actuatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuators');
                     }],
-                    sensorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('sensors');
+                    sensorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensors');
                     }],
                     monitoringComponentList: ['MonitoringService', function (MonitoringService) {
                         return MonitoringService.getMonitoringComponents().then(function (response) {
-                            if (response.data) {
-                                return response.data;
+                            if (response) {
+                                return response;
                             } else {
                                 return [];
                             }
@@ -206,28 +221,32 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
-            // Actuator List and Register (includes Device List and Register)
+            // Actuators
             .when(viewPrefix + '/actuators', {
                 category: 'actuators',
                 templateUrl: 'templates/actuators',
                 controller: 'ActuatorListController as ctrl',
                 resolve: {
-                    actuatorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('actuators');
+                    actuatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuators');
                     }],
-                    addActuator: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.addItem, 'actuators');
+                    addActuator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'actuators');
                     }],
-                    deleteActuator: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.deleteItem, 'actuators');
+                    deleteActuator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'actuators');
                     }],
-                    deviceList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('devices');
+                    deviceList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('devices');
                     }],
-                    adapterList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('adapters');
+                    operatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('operators');
+                    }],
+                    actuatorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuator-types');
+                    }],
+                    accessControlPolicyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
                     }]
                 }
             })
@@ -238,15 +257,47 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 templateUrl: 'templates/actuator-id.html',
                 controller: 'ActuatorDetailsController as ctrl',
                 resolve: {
-                    actuatorDetails: ['$route', '$location', 'CrudService', function ($route, $location, CrudService) {
-                        return CrudService.fetchSpecificItem('actuators', $route.current.params.id).then(
-                            function (data) {
-                                return data;
-                            },
-                            function () {
-                                console.log('404');
-                                $location.url(viewPrefix + '/404');
-                            });
+                    actuatorDetails: ['$route', '$location', 'HttpService', function ($route, $location, HttpService) {
+                        return HttpService.getOne('actuators', $route.current.params.id);
+                    }]
+                }
+            })
+
+            // Entity types
+            .when(viewPrefix + '/entity-types', {
+                category: 'entity-types',
+                templateUrl: 'templates/entity-types',
+                controller: 'EntityTypesListController as ctrl',
+                resolve: {
+                    deviceTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('device-types');
+                    }],
+                    actuatorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('actuator-types');
+                    }],
+                    sensorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensor-types');
+                    }],
+                    addDeviceType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'device-types');
+                    }],
+                    addActuatorType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'actuator-types');
+                    }],
+                    addSensorType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'sensor-types');
+                    }],
+                    deleteDeviceType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'device-types');
+                    }],
+                    deleteActuatorType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'actuator-types');
+                    }],
+                    deleteSensorType: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'sensor-types');
+                    }],
+                    accessControlPolicyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
                     }]
                 }
             })
@@ -257,84 +308,81 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 templateUrl: 'templates/sensors',
                 controller: 'SensorListController as ctrl',
                 resolve: {
-                    sensorList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('sensors');
+                    sensorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensors');
                     }],
-                    addSensor: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.addItem, 'sensors');
+                    addSensor: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'sensors');
                     }],
-                    deleteSensor: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.deleteItem, 'sensors');
+                    deleteSensor: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'sensors');
                     }],
-                    deviceList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('devices');
+                    deviceList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('devices');
                     }],
-                    adapterList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('adapters');
+                    operatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('operators');
+                    }],
+                    sensorTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensor-types');
+                    }],
+                    accessControlPolicyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
                     }]
                 }
             })
 
-            // Sensor Details
+            //Sensor details
             .when(viewPrefix + '/sensors/:id', {
                 category: 'sensors',
                 templateUrl: 'templates/sensor-id.html',
                 controller: 'SensorDetailsController as ctrl',
                 resolve: {
-                    sensorDetails: ['$route', '$location', 'CrudService', function ($route, $location, CrudService) {
-                        return CrudService.fetchSpecificItem('sensors', $route.current.params.id).then(
-                            function (data) {
-                                return data;
-                            },
-                            function () {
-                                console.log('404');
-                                $location.url(viewPrefix + '/404');
-                            });
+                    sensorDetails: ['$route', '$location', 'HttpService', function ($route, $location, HttpService) {
+                        return HttpService.getOne('sensors', $route.current.params.id);
                     }]
                 }
             })
 
-            // Devices List and Register
+            //Devices list and register
             .when(viewPrefix + '/devices', {
                 category: 'devices',
                 templateUrl: 'templates/devices',
                 controller: 'DeviceListController as ctrl',
                 resolve: {
-                    deviceList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('devices');
+                    deviceList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('devices');
                     }],
-                    addDevice: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.addItem, 'devices');
+                    addDevice: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'devices');
                     }],
-                    deleteDevice: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.deleteItem, 'devices');
-                        //return CrudService.deleteItem('devices', this);
+                    deleteDevice: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'devices');
+                    }],
+                    keyPairList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('key-pairs');
+                    }],
+                    deviceTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('device-types');
+                    }],
+                    accessControlPolicyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
                     }]
                 }
             })
 
-            //Device Details
+            //Device details
             .when(viewPrefix + '/devices/:id', {
                 category: 'devices',
                 templateUrl: 'templates/device-id.html',
                 controller: 'DeviceDetailsController as ctrl',
                 resolve: {
-                    deviceDetails: ['$route', '$location', 'CrudService', function ($route, $location, CrudService) {
-                        return CrudService.fetchSpecificItem('devices', $route.current.params.id).then(
-                            function (data) {
-                                return data;
-                            },
-                            function () {
-                                $location.url(viewPrefix + '/404');
-                            });
+                    deviceDetails: ['$route', '$location', 'HttpService', function ($route, $location, HttpService) {
+                        return HttpService.getOne('devices', $route.current.params.id);
                     }],
-                    compatibleAdapters: ['$route', 'MonitoringService', function ($route, MonitoringService) {
-                        return MonitoringService.getCompatibleMonitoringAdapters($route.current.params.id).then(function (response) {
-                            return response.data;
+                    compatibleOperators: ['$route', 'MonitoringService', function ($route, MonitoringService) {
+                        return MonitoringService.getCompatibleMonitoringOperators($route.current.params.id).then(function (response) {
+                            return response;
                         }, function () {
                             return null;
                         });
@@ -342,107 +390,197 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
-            // Adapters list
-            .when(viewPrefix + '/adapters', {
-                category: 'adapters',
-                templateUrl: 'templates/adapters',
-                controller: 'AdapterListController as ctrl',
+            //Operators list
+            .when(viewPrefix + '/operators', {
+                category: 'operators',
+                templateUrl: 'templates/operators',
+                controller: 'OperatorListController as ctrl',
                 resolve: {
-                    isExpert: ['$location', 'SessionService', redirectExpert],
-                    adapterPreprocessing: function () {
+                    operatorPreprocessing: function () {
                     },
-                    parameterTypesList: ['ParameterTypeService', function (ParameterTypeService) {
-                        return ParameterTypeService.getAll().then(function (response) {
-                            if (response.success) {
-                                return response.data;
-                            } else {
-                                return [];
-                            }
-                        });
+                    parameterTypesList: () => parameterTypes,
+                    operatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('operators');
                     }],
-                    adapterList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('adapters');
+                    addOperator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'operators');
                     }],
-                    addAdapter: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.addItem, 'adapters');
-                    }],
-                    deleteAdapter: ['CrudService', function (CrudService) {
-                        // bind category parameter
-                        return angular.bind(this, CrudService.deleteItem, 'adapters');
+                    deleteOperator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'operators');
                     }]
                 }
             })
 
-            //Monitoring adapters
-            .when(viewPrefix + '/monitoring-adapters', {
-                category: 'monitoring-adapters',
-                templateUrl: 'templates/monitoring-adapters',
-                controller: 'MonitoringAdapterListController as ctrl',
+            //Monitoring operators
+            .when(viewPrefix + '/monitoring-operators', {
+                category: 'monitoring-operators',
+                templateUrl: 'templates/monitoring-operators',
+                controller: 'MonitoringOperatorListController as ctrl',
                 resolve: {
-                    isExpert: ['$location', 'SessionService', redirectExpert],
-                    deviceTypesList: ['ComponentTypeService', function (ComponentTypeService) {
-                        return ComponentTypeService.GetByComponent('device').then(function (response) {
-                            return response.data;
-                        }, function () {
-                            return [];
-                        });
+                    deviceTypesList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('device-types');
                     }],
-                    parameterTypesList: ['ParameterTypeService', function (ParameterTypeService) {
-                        return ParameterTypeService.getAll().then(function (response) {
-                            if (response.success) {
-                                return response.data;
-                            } else {
-                                return [];
-                            }
-                        });
+                    parameterTypesList: () => parameterTypes,
+                    monitoringOperatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('monitoring-operators');
                     }],
-                    monitoringAdapterList: ['CrudService', function (CrudService) {
-                        return CrudService.fetchAllItems('monitoring-adapters');
+                    addMonitoringOperator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'monitoring-operators');
                     }],
-                    addMonitoringAdapter: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.addItem, 'monitoring-adapters');
-                    }],
-                    deleteMonitoringAdapter: ['CrudService', function (CrudService) {
-                        return angular.bind(this, CrudService.deleteItem, 'monitoring-adapters');
+                    deleteMonitoringOperator: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'monitoring-operators');
                     }]
                 }
             })
 
-            // Settings
+            //Policy list
+            .when(viewPrefix + '/policies', {
+                category: 'policies',
+                templateUrl: 'templates/policies',
+                controller: 'PolicyListController as ctrl',
+                resolve: {
+                    policyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
+                    }],
+                    addPolicy: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'policies');
+                    }],
+                    deletePolicy: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'policies');
+                    }],
+                    policyConditionList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policy-conditions');
+                    }],
+                    policyEffectList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policy-effects');
+                    }]
+                }
+            })
+
+            //Policy conditions list
+            .when(viewPrefix + '/policy-conditions', {
+                category: 'policy-conditions',
+                templateUrl: 'templates/policy-conditions',
+                controller: 'PolicyConditionListController as ctrl',
+                resolve: {
+                    policyConditionList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policy-conditions');
+                    }],
+                    addPolicyCondition: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'policy-conditions');
+                    }],
+                    deletePolicyCondition: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'policy-conditions');
+                    }]
+                }
+            })
+
+            //Policy effects list
+            .when(viewPrefix + '/policy-effects', {
+                category: 'policy-effects',
+                templateUrl: 'templates/policy-effects',
+                controller: 'PolicyEffectListController as ctrl',
+                resolve: {
+                    policyEffectList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policy-effects');
+                    }],
+                    addPolicyEffect: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'policy-effects');
+                    }],
+                    deletePolicyEffect: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'policy-effects');
+                    }]
+                }
+            })
+
+            //Settings
             .when(viewPrefix + '/settings', {
                 category: 'settings',
                 templateUrl: 'templates/settings',
-                controller: 'SettingsController as ctrl'
+                controller: 'SettingsController as ctrl',
+                resolve: {
+                    settings: ['SettingsService', function (SettingsService) {
+                        //Retrieve settings initially
+                        return SettingsService.getSettings().then(function (response) {
+                            return response;
+                        });
+                    }],
+                    documentationMetaData: ['SettingsService', function (SettingsService) {
+                        //Retrieve settings initially
+                        return SettingsService.getDocumentationMetaData().then(function (response) {
+                            return response;
+                        });
+                    }]
+                }
             })
 
-            // Error 404
+            //Exception logs
+            .when(viewPrefix + '/exception-logs', {
+                category: 'exception-logs',
+                templateUrl: 'templates/exception-logs',
+                controller: 'ExceptionLogController as ctrl',
+                resolve: {
+                    exceptionLogs: ['LogService', function (LogService) {
+                        //Retrieve settings initially
+                        return LogService.getExceptionLogs(10, 0, "time,desc").then(function (response) {
+                            return response;
+                        });
+                    }]
+                }
+            })
+
+            //Testing-Tool
+            .when(viewPrefix + '/testing-tool', {
+                category: 'test-details',
+                templateUrl: 'templates/testing-tool',
+                controller: 'TestingController as ctrl',
+                resolve: {
+                    testList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('test-details');
+                    }],
+                    addTest: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'test-details');
+                    }],
+                    ruleList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rules');
+                    }],
+                    sensorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensors');
+                    }],
+                    deleteTest: ['HttpService', function (HttpService) {
+                        // bind category parameter
+                        return angular.bind(this, HttpService.deleteOne, 'test-details');
+                    }],
+                    accessControlPolicyList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('policies');
+                    }]
+                }
+            })
+
+            //Testing details
+            .when(viewPrefix + '/testing-tool/:id', {
+                category: 'test-details',
+                templateUrl: 'templates/testing-tool-id',
+                controller: 'TestingDetailsController as ctrl',
+                resolve: {
+                    testingDetails: ['$route', '$location', 'HttpService', function ($route, $location, HttpService) {
+                        return HttpService.getOne('test-details', $route.current.params.id);
+                    }],
+                    ruleList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('rules');
+                    }],
+                    updateTest: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.updateItem, 'test-details');
+                    }],
+                    sensorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('sensors');
+                    }]
+                }
+            })
+
+            //Error 404
             .when(viewPrefix + '/404', {
                 templateUrl: 'templates/404'
-            })
-
-            // Go expert
-            .when(viewPrefix + '/expert', {
-                redirectTo: function () {
-                    return '/';
-                },
-                resolve: {
-                    goExpert: ['SessionService', function (SessionService) {
-                        SessionService.goExpert();
-                    }]
-                }
-            })
-
-            // Back to normal
-            .when(viewPrefix + '/no-expert', {
-                redirectTo: function () {
-                    return '/';
-                },
-                resolve: {
-                    leaveExpert: ['SessionService', function (SessionService) {
-                        SessionService.leaveExpert();
-                    }]
-                }
             })
 
             .otherwise({
@@ -451,19 +589,17 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
     }
 ]);
 
-app.run(['$rootScope', '$timeout', 'SessionService', '$location', '$cookieStore', '$http',
-    function ($rootScope, $timeout, SessionService, $location, $cookieStore, $http) {
+app.run(['$rootScope', '$cookieStore', '$timeout', '$location',
+    function ($rootScope, $cookieStore, $timeout, $location) {
 
-        // keep user logged in after page refresh
+        //Keep user logged in after page refresh
         $rootScope.globals = $cookieStore.get('globals') || {};
-        if ($rootScope.globals.currentUser) {
-            $http.defaults.headers.common['Authorization'] = 'Basic ' + $rootScope.globals.currentUser.authdata;
-        }
 
-        $rootScope.$on('$locationChangeStart', function (event, next, current) {
-            // redirect to login page if not logged in and trying to access a restricted page
-            var restrictedPage = $.inArray($location.path(), ['/login', '/register']) === -1;
-            var loggedIn = $rootScope.globals.currentUser;
+        //Register listener for location change
+        $rootScope.$on('$locationChangeStart', function () {
+            // Redirect user to login page if not logged in
+            let restrictedPage = $.inArray($location.path(), ['/login', '/register']) === -1;
+            let loggedIn = $rootScope.globals.currentUser;
             if (restrictedPage && !loggedIn) {
                 $location.path('/login');
             }
@@ -471,15 +607,12 @@ app.run(['$rootScope', '$timeout', 'SessionService', '$location', '$cookieStore'
 
         $rootScope.$on('$viewContentLoaded', function () {
             $timeout(function () {
-
                 $rootScope.loggedIn = $rootScope.globals.currentUser;
 
                 if ($rootScope.loggedIn) {
                     $rootScope.username = $rootScope.globals.currentUser.username;
+                    $rootScope.userData = $rootScope.globals.currentUser.userData;
                 }
-
-                // set expert
-                $rootScope.expert = SessionService.isExpert();
             });
         });
     }
@@ -487,7 +620,7 @@ app.run(['$rootScope', '$timeout', 'SessionService', '$location', '$cookieStore'
 
 app.controller('MainCtrl', ['$route', '$rootScope', '$routeParams', '$location',
     function MainCtrl($route, $rootScope, $routeParams, $location) {
-        var vm = this;
+        let vm = this;
         vm.$route = $route;
         vm.$location = $location;
         vm.$routeParams = $routeParams;

@@ -25,7 +25,7 @@ app.directive('unitInput', ['UnitService', function (UnitService) {
             //Execute server request
             UnitService.getPredefinedUnits(scope.unitFilter).then(function (response) {
                 //Success, set array
-                scope.unitList = response.data;
+                scope.unitList = response;
             }, function () {
                 //Failure, no suggestions
                 scope.unitList = [];
@@ -56,12 +56,13 @@ app.directive('unitInput', ['UnitService', function (UnitService) {
         template: '<div class="input-group" style="margin-bottom:0;">' +
             '<input type="text" class="form-control" placeholder="Unit" ng-model="bindedModel">' +
             '<span class="input-group-btn">' +
-            '<button type="button" class="btn bg-teal dropdown-toggle" data-toggle="dropdown">' +
+            '<button type="button" class="btn bg-mbp-blue dropdown-toggle" data-toggle="dropdown">' +
             'Suggestions&nbsp;' +
             '<span class="caret"></span>' +
             '</button>' +
             '<ul class="dropdown-menu dropdown-scrollable" role="menu">' +
-            '<li class="dropdown-header" ng-repeat-start="quantity in unitList">{{quantity.name}}</li>' +
+            '<input disable-auto-close type="search" ng-model="searchFilter" class="units-search-box" placeholder="Search..."/>' +
+            '<li class="dropdown-header" ng-repeat-start="quantity in unitList | filter: searchFilter">{{quantity.name}}</li>' +
             '<li><a href="#" ng-repeat="unit in quantity.units" ng-click="suggestionCallback(unit.format)">{{unit.name}}</a></li>' +
             '<li class="divider" ng-repeat-end></li>' +
             '</ul>' +

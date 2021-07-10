@@ -1,34 +1,28 @@
-(function() {
-  'use strict';
+/**
+ * Controller for the rules list page.
+ */
+app.controller('RegisterController', ['$scope', '$location', 'UserService', 'NotificationService',
+    function ($scope, $location, UserService, NotificationService) {
+        let vm = this;
 
-  angular
-    .module('app')
-    .controller('RegisterController', RegisterController);
+        function registerUser() {
+            vm.dataLoading = true;
+            UserService.createUser(vm.user).then(function (response) {
+                NotificationService.showSuccess("Registration was successful!");
 
-  RegisterController.$inject = ['UserService', '$location', '$rootScope', 'FlashService'];
+                //Redirect
+                $location.path('/login');
+            }, function (response) {
 
-  function RegisterController(UserService, $location, $rootScope, FlashService) {
-    var vm = this;
+            }).then(function () {
+                vm.dataLoading = false;
+                $scope.$apply();
+            });
+        }
 
-    vm.register = register;
-
-    function register() {
-      vm.dataLoading = true;
-      UserService.Create(vm.user)
-        .then(function(response) {
-          if (response.success) {
-            FlashService.Success(response.message, true);
-            $location.path('/login');
-          } else {
-            if (response.status === 403) {
-              FlashService.Error("Authorization error!");
-            } else {
-              FlashService.Error(response.message);
-            }
-            vm.dataLoading = false;
-          }
+        //Expose functions
+        angular.extend(vm, {
+            register: registerUser
         });
-    }
-  }
-
-})();
+    }]
+);

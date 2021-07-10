@@ -12,7 +12,7 @@
     <title>MBP</title>
 
     <!-- Favicon-->
-    <link rel="icon" th:href="@{/images/favicon.ico}" type="image/x-icon">
+    <link rel="icon" th:href="@{/images/mbp-icon.png}" type="image/x-icon">
 
     <!-- Google Fonts -->
     <link th:href="@{/plugins/google-fonts/roboto.css}" rel="stylesheet">
@@ -21,20 +21,26 @@
     <!-- Bootstrap Css -->
     <link th:href="@{/plugins/bootstrap/css/bootstrap.min.css}" rel="stylesheet"/>
 
-    <!-- Angular Css -->
-    <link th:href="@{/css/angular.css}" rel="stylesheet"/>
-
     <!-- Waves Effect Css -->
     <link th:href="@{/plugins/node-waves/waves.css}" rel="stylesheet"/>
 
     <!-- Animation Css -->
     <link th:href="@{/plugins/animate-css/animate.css}" rel="stylesheet"/>
 
+    <!-- jQuery-UI -->
+    <link th:href="@{/plugins/jquery-ui/jquery-ui.css}" rel="stylesheet"/>
+
+    <!-- jQuery DataTables -->
+    <link th:href="@{/plugins/jquery-datatables/dataTables.bootstrap.min.css}" rel="stylesheet"/>
+
+    <!-- jQuery QueryBuilder -->
+    <link th:href="@{/plugins/jquery-querybuilder/css/query-builder.default.css}" rel="stylesheet"/>
+
+    <!-- jQuery-UI Rotatable -->
+    <link th:href="@{/plugins/jquery-ui-rotatable/jquery.ui.rotatable.css}" rel="stylesheet"/>
+
     <!-- Morris Chart Css-->
     <link th:href="@{/plugins/morrisjs/morris.css}" rel="stylesheet"/>
-
-    <!-- JQuery DataTable Css -->
-    <link th:href="@{/plugins/jquery-datatable/skin/bootstrap/css/dataTables.bootstrap.css}" rel="stylesheet">
 
     <!-- Dropzone CSS -->
     <link th:href="@{/plugins/dropzone/min/dropzone.min.css}" rel="stylesheet"/>
@@ -54,9 +60,6 @@
     <!-- Angular UI Bootstrap href fix -->
     <link th:href="@{/plugins/angular-ui/bootstrap/css/angular-ui-fix.css}" rel="stylesheet"/>
 
-    <!-- Angular UI Select Plugin -->
-    <!--<link th:href="@{/plugins/angular-ui-select/css/select.min.css}" rel="stylesheet"/>-->
-
     <!-- Angular Dropzone Plugin -->
     <link th:href="@{/plugins/angular-dropzone/css/ng-dropzone.min.css}" rel="stylesheet"/>
 
@@ -66,20 +69,14 @@
     <!-- Font Awesome -->
     <link th:href="@{/plugins/fontawesome/all.css}" rel="stylesheet">
 
-    <!-- JQuery UI -->
-    <link th:href="@{/plugins/jquery-ui/jquery-ui.css}" rel="stylesheet"/>
-
     <!-- JsPlumb Defaults -->
     <link th:href="@{/plugins/jsplumb/css/jsPlumb-defaults.css}" rel="stylesheet"/>
 
     <!-- Modeling Tool Css -->
-    <link th:href="@{/css/modeling-tool.css}" rel="stylesheet"/>
+    <link th:href="@{/css/modelling-tool.css}" rel="stylesheet"/>
 
     <!-- Event pattern creator -->
     <link th:href="@{/css/cep-query-editor.css}" rel="stylesheet"/>
-
-    <!-- Angular loading bar -->
-    <link th:href="@{/plugins/angular-loading-bar/loading-bar.min.css}" rel="stylesheet"/>
 
     <!-- waitMe plugin -->
     <link th:href="@{/plugins/waitme/waitMe.min.css}" rel="stylesheet"/>
@@ -90,11 +87,37 @@
     <!-- Ion RangeSlider -->
     <link th:href="@{/plugins/ion-rangeslider/ion.rangeSlider.min.css}" rel="stylesheet"/>
 
-    <!-- jQuery-QueryBuilder -->
-    <link th:href="@{/plugins/jquery-querybuilder/css/query-builder.default.css}" rel="stylesheet"/>
+    <!-- Easy Autocomplete -->
+    <link th:href="@{/plugins/easy-autocomplete/autocomplete.min.css}" rel="stylesheet"/>
+
+    <!-- GitHub Fork Ribbon -->
+    <link th:href="@{/plugins/gh-fork-ribbon/gh-fork-ribbon.min.css}" rel="stylesheet"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.4.1/jspdf.debug.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/2.3.4/jspdf.plugin.autotable.min.js"></script>
+
+
+    <script src="path/to/dom-to-image-more.min.js"/>
+    <script>
+        domtoimage.toPng(node)
+        //...
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"
+            integrity="sha256-c9vxcXyAG4paArQG3xk6DjyW/9aHxai2ef9RpMWO44A=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.5/jspdf.min.js"></script>
+
 </head>
 
-<body ng-class="expert ? 'theme-red' : 'theme-blue'" ng-cloak="ng-cloak" ng-controller="IndexController as ctrl">
+<body class="theme-blue" ng-cloak="ng-cloak" ng-controller="IndexController as ctrl">
+<!-- Progress bar for HTTP requests -->
+<div id="requestLoadingBar" class="progress" ng-show="ctrl.loadingBarDisplay">
+    <div class="progress-bar progress-bar-primary progress-bar-striped active" role="progressbar">
+        <span>{{ctrl.requestCount}} active {{(ctrl.requestCount === 1) ? 'request' : 'requests'}}</span>
+    </div>
+</div>
+
 <!-- Overlay For Sidebars -->
 <div class="overlay"></div>
 <!-- #END# Overlay For Sidebars -->
@@ -109,7 +132,7 @@
             <a class="navbar-brand" href="./">MBP: A Platform for Managing IoT Environments</a>
         </div>
         <div style="float: right">
-            <a class="navbar-brand" href="./login" ng-show="loggedIn">
+            <a class="navbar-brand" th:href="@{/logout}" target="_parent" ng-show="loggedIn">
                 <i class="material-icons">power_settings_new</i>
                 <span>Logout</span>
             </a>
@@ -123,116 +146,134 @@
     <!-- User Info -->
     <div class="user-info">
         <div class="image">
-            <img src="images/user.png" width="48" height="48" alt="User"/>
+            <img src="images/user.png" alt="User" style="width:48px;height:48px"/>
         </div>
         <div class="info-container">
             <div class="name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 {{username}}
             </div>
-            <div class="name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size: 10px">
-                {{expert ? "Expert User" : "Normal User"}}
-            </div>
-            <div class="btn-group user-helper-dropdown" uib-dropdown="uib-dropdown" is-open="status.isopen">
-                <!--<button class="dropdown-toggle pull-right">-->
-                <i class="material-icons" id="single-button" type="button" uib-dropdown-toggle="uib-dropdown-toggle"
-                   ng-disabled="disabled">keyboard_arrow_down</i>
-                <!--</button>-->
-                <ul class="dropdown-menu pull-right" uib-dropdown-menu="uib-dropdown-menu" role="menu"
-                    aria-labelledby="single-button">
-                    <li ng-hide="expert">
-                        <a href="view/expert">
-                            <i class="material-icons">person</i>Go Expert</a>
-                    </li>
-                    <li ng-show="expert">
-                        <a href="view/no-expert">
-                            <i class="material-icons">person</i>Leave Expert</a>
-                    </li>
-                    <li>
-                        <a href="view/users">
-                            <i class="material-icons">person</i>Users</a>
-                    </li>
-                </ul>
+            <div class="username" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                 style="font-size: 10px">
+                {{userData.firstName + " " + userData.lastName}}
             </div>
         </div>
     </div>
-    <!-- #User Info -->
     <!-- Menu -->
     <div class="menu">
         <ul class="list">
-          <li class="header">Main Navigation</li>
-          <li class="active" href="" menu-item="menu-item">
-            <a href="./">
-              <i class="material-icons">home</i>
-              <span>Home</span>
-            </a>
-          </li>
-          <li href="view/model" menu-item="menu-item">
-            <a href="view/model">
-              <i class="material-icons">view_quilt</i>
-              <span>IoT Models</span>
-            </a>
-          </li>
-          <li menu-item="menu-item">
-              <a class="menu-toggle">
-                  <i class="material-icons">call_split</i>
-                  <span>Rules</span>
-              </a>
-              <ul class="ml-menu">
-                  <li>
-                      <a href="view/rules">Rule Definitions</a>
-                  </li>
-                  <li>
-                      <a href="view/rule-triggers">Rule Triggers</a>
-                  </li>
-                  <li>
-                      <a href="view/rule-actions">Rule Actions</a>
-                  </li>
-              </ul>
-          </li>
-          <li href="view/devices" menu-item="menu-item">
-            <a href="view/devices">
-              <i class="material-icons">devices</i>
-              <span>Devices</span>
-            </a>
-          </li>
-          <li href="view/sensors" menu-item="menu-item">
-            <a href="view/sensors">
-              <i class="material-icons">settings_remote</i>
-              <span>Sensors</span>
-            </a>
-          </li>
-          <li href="view/actuators" menu-item="menu-item">
-            <a href="view/actuators">
-              <i class="material-icons">wb_incandescent</i>
-              <span>Actuators</span>
-            </a>
-          </li>
-          <li href="view/adapters" ng-show="expert" menu-item="menu-item">
-            <a href="view/adapters">
-              <i class="material-icons">description</i>
-              <span>Extraction/Control Operators</span>
-            </a>
-          </li>
-          <li href="view/monitoring-adapters" ng-show="expert" menu-item="menu-item">
-            <a href="view/monitoring-adapters">
-              <i class="material-icons">timeline</i>
-              <span>Monitoring Operators</span>
-            </a>
-          </li>
-<!--           <li href="view/adapters" ng-show="expert" menu-item="menu-item">
-            <a href="view/adapters">
-              <i class="material-icons">description</i>
-              <span>Processing Operators</span>
-            </a>
-          </li> -->
-          <li href="view/settings" ng-show="expert" menu-item="menu-item">
-            <a href="view/settings">
-              <i class="material-icons">settings</i>
-              <span>Settings</span>
-            </a>
-          </li>
-          <!-- <li ng-hide="expert"> <a href="view/expert"> <i class="material-icons">person</i> <span>Go Expert</span> </a> </li> <li ng-show="expert"> <a href="view/no-expert"> <i class="material-icons">person</i> <span>Back to Normal User</span> </a>
-          </li>-->
+            <li class="header">Main Navigation</li>
+            <li class="active" href="./" menu-item="menu-item">
+                <a href="./">
+                    <i class="material-icons">home</i>
+                    <span>Home</span>
+                </a>
+            </li>
+            <li href="view/env-models" menu-item="menu-item">
+                <a href="view/env-models">
+                    <i class="material-icons">view_quilt</i>
+                    <span>Environment Models</span>
+                </a>
+            </li>
+            <li menu-item="menu-item">
+                <a class="menu-toggle">
+                    <i class="material-icons">devices</i>
+                    <span>IoT Hardware</span>
+                </a>
+                <ul class="ml-menu">
+                    <li>
+                        <a href="view/devices" menu-item="menu-item">Devices</a>
+                    </li>
+                    <li>
+                        <a href="view/actuators" menu-item="menu-item">Actuators</a>
+                    </li>
+                    <li>
+                        <a href="view/sensors" menu-item="menu-item">Sensors</a>
+                    </li>
+                    <li>
+                        <a href="view/key-pairs" menu-item="menu-item">Key Pairs</a>
+                    </li>
+                </ul>
+            </li>
+            <li menu-item="menu-item">
+                <a class="menu-toggle">
+                    <i class="material-icons">description</i>
+                    <span>Operators</span>
+                </a>
+                <ul class="ml-menu">
+                    <li>
+                        <a href="view/operators" menu-item="menu-item">Extraction/Control Operators</a>
+                    </li>
+                    <li>
+                        <a href="view/monitoring-operators" menu-item="menu-item">Monitoring Operators</a>
+                    </li>
+                </ul>
+            </li>
+            <li menu-item="menu-item">
+                <a class="menu-toggle">
+                    <i class="material-icons">call_split</i>
+                    <span>Rules</span>
+                </a>
+                <ul class="ml-menu">
+                    <li>
+                        <a href="view/rules" menu-item="menu-item">Definitions</a>
+                    </li>
+                    <li>
+                        <a href="view/rule-triggers" menu-item="menu-item">Conditions</a>
+                    </li>
+                    <li>
+                        <a href="view/rule-actions" menu-item="menu-item">Actions</a>
+                    </li>
+                    <li>
+                        <a href="view/testing-tool" menu-item="menu-item">Testing-Tool</a>
+                    </li>
+                </ul>
+            </li>
+            <li href="view/entity-types" menu-item="menu-item">
+                <a href="view/entity-types">
+                    <i class="material-icons">widgets</i>
+                    <span>Entity Types</span>
+                </a>
+            </li>
+            <li menu-item="menu-item">
+                <a class="menu-toggle">
+                    <i class="material-icons">security</i>
+                    <span>Policies</span>
+                </a>
+                <ul class="ml-menu">
+                    <li>
+                        <a href="view/policies" menu-item="menu-item">Policy Definitions</a>
+                    </li>
+                    <li>
+                        <a href="view/policy-conditions" menu-item="menu-item">Conditions</a>
+                    </li>
+                    <li>
+                        <a href="view/policy-effects" menu-item="menu-item">Effects</a>
+                    </li>
+                </ul>
+            </li>
+            <li href="view/users" menu-item="menu-item" ng-show="userData.isAdmin">
+                <a href="view/users">
+                    <i class="material-icons">people</i>
+                    <span>User Management</span>
+                </a>
+            </li>
+            <li href="view/settings" menu-item="menu-item" ng-show="userData.isAdmin">
+                <a href="view/settings">
+                    <i class="material-icons">settings</i>
+                    <span>Settings</span>
+                </a>
+            </li>
+            <li menu-item="menu-item" ng-show="userData.isAdmin">
+                <a class="menu-toggle">
+                    <i class="material-icons">list</i>
+                    <span>Logs</span>
+                </a>
+                <ul class="ml-menu">
+                    <li>
+                        <a href="view/exception-logs" menu-item="menu-item">Exception logs</a>
+                    </li>
+                </ul>
+            </li>
         </ul>
     </div>
     <!-- #Menu -->
@@ -240,10 +281,9 @@
     <div class="legal">
         <div class="copyright">
             &copy;
-            {{ctrl.getDate()| date:'yyyy'}}
-            <a href="javascript:void(0);">MBP</a>.
+            {{ctrl.getDate() | date:'yyyy'}}&nbsp;|&nbsp;
+            <a href="#" ng-click="ctrl.showAboutAlert()">MBP</a>.
         </div>
-        <!--<div class="version"> <b>Version: </b> 0.2.0 </div>-->
     </div>
     <!-- #Footer -->
 </aside>
@@ -251,10 +291,6 @@
 
 <section class="content" ng-style="{ 'margin-left' : loggedIn ? '315px' : '0px' }">
     <div class="container-fluid">
-        <!-- <div ng-controller="MainCtrl as main"> <pre>$location.absUrl() = {{main.$location.absUrl()}}</pre> <pre>$location.path() = {{main.$location.path()}}</pre> <pre>$route.current.templateUrl = {{main.$route.current.templateUrl}}</pre>
-        <pre>$route.current.params = {{main.$route.current.params}}</pre> <pre>$route.current.scope.name = {{$route.current.scope.name}}</pre> <pre>$routeParams = {{main.$routeParams}}</pre> </div> -->
-        <div ng-class="{ 'alert': flash, 'alert-success': flash.type === 'success', 'alert-danger': flash.type === 'error' }"
-             ng-if="flash" ng-bind="flash.message"></div>
         <div ng-view="ng-view"></div>
     </div>
 </section>
@@ -262,10 +298,23 @@
 <!-- JQuery -->
 <script th:src="@{/plugins/jquery/jquery-3.1.1.min.js}"></script>
 
-<!-- JQuery UI -->
+<!-- JQuery-UI -->
 <script th:src="@{/plugins/jquery-ui/jquery-ui.js}"></script>
 
-<!-- Handle naming conflict between jQuery UI and Bootstrap -->
+<!-- jQuery DataTables -->
+<script th:src="@{/plugins/jquery-datatables/dataTables.min.js}"></script>
+<script th:src="@{/plugins/jquery-datatables/dataTables.bootstrap.min.js}"></script>
+
+<!-- jQuery Steps -->
+<script th:src="@{/plugins/jquery-steps/jquery.steps.min.js}"></script>
+
+<!-- jQuery QueryBuilder -->
+<script th:src="@{/plugins/jquery-querybuilder/js/query-builder.standalone.min.js}"></script>
+
+<!-- jQuery CountTo -->
+<script th:src="@{/plugins/jquery-countTo/countTo.js}"></script>
+
+<!-- Handle naming conflict between jQuery-UI and Bootstrap -->
 <script>
     $.widget.bridge('uibutton', $.ui.button);
     $.widget.bridge('uitooltip', $.ui.tooltip);
@@ -280,14 +329,8 @@
 <!-- Dropzone Js -->
 <script th:src="@{/plugins/dropzone/min/dropzone.min.js}"></script>
 
-<!-- JQuery Steps Plugin Js -->
-<script th:src="@{/plugins/jquery-steps/jquery.steps.min.js}"></script>
-
 <!-- Custom Template Js -->
 <script th:src="@{/js/admin.js}"></script>
-
-<!-- Input Mask Plugin Js -->
-<script th:src="@{/plugins/jquery-inputmask/jquery.inputmask.bundle.js}"></script>
 
 <!-- AngularJS with resource and route - built by WRO -->
 <script th:src="@{/js/angular.js}"></script>
@@ -310,9 +353,6 @@
 <!-- Bootstrap notify plugin -->
 <script th:src="@{/plugins/bootstrap-notify/bootstrap-notify.min.js}"></script>
 
-<!-- Angular loading bar -->
-<script th:src="@{/plugins/angular-loading-bar/loading-bar.min.js}"></script>
-
 <!-- waitMe plugin -->
 <script th:src="@{/plugins/waitme/waitMe.min.js}"></script>
 
@@ -328,30 +368,46 @@
 <!-- JsPlumb -->
 <script th:src="@{/plugins/jsplumb/jsplumb.js}"></script>
 
-<!-- jQuery-Steps -->
-<script th:src="@{/plugins/jquery-steps/jquery.steps.min.js}"></script>
+<!-- Easy Autocomplete -->
+<script th:src="@{/plugins/easy-autocomplete/autocomplete.min.js}"></script>
 
-<!-- jQuery-QueryBuilder -->
-<script th:src="@{/plugins/jquery-querybuilder/js/query-builder.standalone.min.js}"></script>
+<!-- jQuery-UI-Rotatable-->
+<script th:src="@{/plugins/jquery-ui-rotatable/jquery.ui.rotatable.js}"></script>
+
+<!-- Undo Manager -->
+<script th:src="@{/plugins/undo-manager/undo-manager.min.js}"></script>
+
+<!-- Filesaver -->
+<script th:src="@{/plugins/filesaver/filesaver.min.js}"></script>
+
+<!-- CryptoJS -->
+<script th:src="@{/plugins/cryptojs/cryptojs.min.js}"></script>
 
 <!-- Angular -->
 <script th:src="@{/js/app.js}"></script>
-<script th:src="@{/js/services/SessionService.js}"></script>
-<script th:src="@{/js/services/CrudService.js}"></script>
 <script th:src="@{/js/services/FileReader.js}"></script>
+<script th:src="@{/js/services/KeyPairService.js}"></script>
 <script th:src="@{/js/services/DeviceService.js}"></script>
 <script th:src="@{/js/services/ComponentService.js}"></script>
-<script th:src="@{/js/services/AdapterService.js}"></script>
+<script th:src="@{/js/services/OperatorService.js}"></script>
 <script th:src="@{/js/services/MonitoringService.js}"></script>
-<script th:src="@{/js/services/AuthenticationService.js}"></script>
-<script th:src="@{/js/services/FlashService.js}"></script>
 <script th:src="@{/js/services/UserService.js}"></script>
-<script th:src="@{/js/services/ComponentTypeService.js}"></script>
-<script th:src="@{/js/services/ModelService.js}"></script>
-<script th:src="@{/js/services/ParameterTypeService.js}"></script>
+<script th:src="@{/js/services/EnvModelService.js}"></script>
 <script th:src="@{/js/services/UnitService.js}"></script>
 <script th:src="@{/js/services/NotificationService.js}"></script>
 <script th:src="@{/js/services/RuleService.js}"></script>
+<script th:src="@{/js/services/SettingsService.js}"></script>
+<script th:src="@{/js/services/TestService.js}"></script>
+<script th:src="@{/js/services/DefaultComponentsService.js}"></script>
+
+<script th:src="@{/js/services/RuleActionService.js}"></script>
+<script th:src="@{/js/services/RuleTriggerService.js}"></script>
+<script th:src="@{/js/services/PolicyService.js}"></script>
+<script th:src="@{/js/services/PolicyConditionService.js}"></script>
+<script th:src="@{/js/services/PolicyEffectService.js}"></script>
+<script th:src="@{/js/services/HttpService.js}"></script>
+<script th:src="@{/js/services/TestService.js}"></script>
+<script th:src="@{/js/services/LogService.js}"></script>
 
 <script th:src="@{/js/directives/menuItem.js}"></script>
 <script th:src="@{/js/directives/popover.js}"></script>
@@ -361,33 +417,46 @@
 <script th:src="@{/js/directives/units/UnitInput.js}"></script>
 <script th:src="@{/js/directives/charts/LiveChart.js}"></script>
 <script th:src="@{/js/directives/charts/HistoricalChart.js}"></script>
+<script th:src="@{/js/directives/env-models/EnvModelTool.js}"></script>
 <script th:src="@{/js/directives/stats/ValueLogStats.js}"></script>
 <script th:src="@{/js/directives/triggers/CEPQueryEditor.js}"></script>
 
 <script th:src="@{/js/controllers/index/IndexController.js}"></script>
-
 <script th:src="@{/js/controllers/ItemListController.js}"></script>
 <script th:src="@{/js/controllers/ItemDetailsController.js}"></script>
 <script th:src="@{/js/controllers/AddItemController.js}"></script>
+<script th:src="@{/js/controllers/UpdateItemController.js}"></script>
 <script th:src="@{/js/controllers/DeleteItemController.js}"></script>
+<script th:src="@{/js/controllers/DeleteTestController.js}"></script>
 
 <script th:src="@{/js/controllers/home/HomeController.js}"></script>
+<script th:src="@{/js/controllers/key-pairs/KeyPairListController.js}"></script>
 <script th:src="@{/js/controllers/actuators/ActuatorListController.js}"></script>
 <script th:src="@{/js/controllers/sensors/SensorListController.js}"></script>
+<script th:src="@{/js/controllers/testing/TestingListController.js}"></script>
+<script th:src="@{/js/controllers/testing/TestingDetailsController.js}"></script>
+<script th:src="@{/js/controllers/testing/TestingChartController.js}"></script>
+<script th:src="@{/js/controllers/testing/TestReportController.js}"></script>
+
 <script th:src="@{/js/controllers/devices/DeviceListController.js}"></script>
 <script th:src="@{/js/controllers/devices/DeviceDetailsController.js}"></script>
-<script th:src="@{/js/controllers/adapters/AdapterListController.js}"></script>
-<script th:src="@{/js/controllers/monitoring-adapters/MonitoringAdapterListController.js}"></script>
+<script th:src="@{/js/controllers/operators/OperatorListController.js}"></script>
+<script th:src="@{/js/controllers/monitoring-operators/MonitoringOperatorListController.js}"></script>
 <script th:src="@{/js/controllers/components/ComponentDetailsController.js}"></script>
 <script th:src="@{/js/controllers/actuators/ActuatorDetailsController.js}"></script>
 <script th:src="@{/js/controllers/sensors/SensorDetailsController.js}"></script>
+<script th:src="@{/js/controllers/entity-types/EntityTypesListController.js}"></script>
 <script th:src="@{/js/controllers/rules/RuleListController.js}"></script>
 <script th:src="@{/js/controllers/rules/RuleActionListController.js}"></script>
 <script th:src="@{/js/controllers/rules/RuleTriggerListController.js}"></script>
+<script th:src="@{/js/controllers/policies/PolicyListController.js}"></script>
+<script th:src="@{/js/controllers/policies/PolicyConditionListController.js}"></script>
+<script th:src="@{/js/controllers/policies/PolicyEffectListController.js}"></script>
 <script th:src="@{/js/controllers/settings/SettingsController.js}"></script>
 <script th:src="@{/js/controllers/user/LoginController.js}"></script>
 <script th:src="@{/js/controllers/user/RegisterController.js}"></script>
-<script th:src="@{/js/controllers/user/UsersController.js}"></script>
-<script th:src="@{/js/controllers/model/ModelController.js}"></script>
+<script th:src="@{/js/controllers/user/UserListController.js}"></script>
+<script th:src="@{/js/controllers/env-models/EnvModelListController.js}"></script>
+<script th:src="@{/js/controllers/logs/ExceptionLogController.js}"></script>
 </body>
 </html>

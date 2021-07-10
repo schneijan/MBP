@@ -14,16 +14,16 @@ app.controller('ComponentDetailsController',
             const COMPONENT_ID = $routeParams.id;
             const COMPONENT_TYPE = componentDetails.componentTypeName;
             const COMPONENT_TYPE_URL = COMPONENT_TYPE + 's';
-            const COMPONENT_ADAPTER_UNIT = componentDetails._embedded.adapter.unit;
+            const COMPONENT_OPERATOR_UNIT = componentDetails.operator.unit;
 
             //Initialization of variables that are used in the frontend by angular
-            var vm = this;
+            let vm = this;
             vm.component = componentDetails;
             vm.isLoading = false;
             vm.deploymentState = 'UNKNOWN';
             vm.deviceState = 'UNKNOWN';
-            vm.displayUnit = COMPONENT_ADAPTER_UNIT;
-            vm.displayUnitInput = COMPONENT_ADAPTER_UNIT;
+            vm.displayUnit = COMPONENT_OPERATOR_UNIT;
+            vm.displayUnitInput = COMPONENT_OPERATOR_UNIT;
 
             //Stores the parameters and their values as assigned by the user
             vm.parameterValues = [];
@@ -48,7 +48,7 @@ app.controller('ComponentDetailsController',
                 initHistoricalChart();
 
                 //Interval for updating states on a regular basis
-                var interval = $interval(function () {
+                let interval = $interval(function () {
                     updateDeploymentState(true);
                     updateDeviceState();
                 }, 2 * 60 * 1000);
@@ -76,7 +76,7 @@ app.controller('ComponentDetailsController',
                 //Retrieve the state of the current component
                 ComponentService.getComponentState(COMPONENT_ID, COMPONENT_TYPE_URL).then(function (response) {
                     //Success
-                    vm.deploymentState = response.data;
+                    vm.deploymentState = response.content;
                 }, function (response) {
                     //Failure
                     vm.deploymentState = 'UNKNOWN';
@@ -84,6 +84,7 @@ app.controller('ComponentDetailsController',
                 }).then(function () {
                     //Finally hide the waiting screen again
                     hideDeploymentWaitingScreen();
+                    $scope.$apply();
                 });
             }
 
@@ -96,13 +97,15 @@ app.controller('ComponentDetailsController',
                 vm.deviceState = 'LOADING';
 
                 //Retrieve device state
-                DeviceService.getDeviceState(componentDetails._embedded.device.id).then(function (response) {
+                DeviceService.getDeviceState(componentDetails.device.id).then(function (response) {
                     //Success
-                    vm.deviceState = response.data;
+                    vm.deviceState = response.content;
                 }, function (response) {
                     //Failure
                     vm.deviceState = 'UNKNOWN';
                     NotificationService.notify('Could not load device state.', 'error');
+                }).then(function () {
+                    $scope.$apply();
                 });
             }
 
@@ -113,18 +116,21 @@ app.controller('ComponentDetailsController',
              */
             function onDisplayUnitChange() {
                 //Retrieve entered unit
-                var inputUnit = vm.displayUnitInput;
+                let inputUnit = vm.displayUnitInput;
 
-                //Check whether the entered unit is compatible with the adapter unit
-                UnitService.checkUnitsForCompatibility(COMPONENT_ADAPTER_UNIT, inputUnit).then(function (response) {
+                //Check whether the entered unit is compatible with the operator unit
+                UnitService.checkUnitsForCompatibility(COMPONENT_OPERATOR_UNIT, inputUnit).then(function (response) {
                     //Check compatibility according to server response
-                    if (!response.data) {
-                        NotificationService.notify("The entered unit is not compatible to the adapter unit.", "error");
+                    if (!response) {
+                        NotificationService.notify("The entered unit is not compatible to the operator unit.", "error");
                         return;
                     }
 
                     //Units are compatible, take user input as new unit
                     vm.displayUnit = vm.displayUnitInput;
+
+                    //Update UI
+                    $scope.$apply();
 
                 }, function () {
                     NotificationService.notify("The entered unit is invalid.", "error");
@@ -142,12 +148,6 @@ app.controller('ComponentDetailsController',
                 //Execute deployment request
                 ComponentService.deploy(componentDetails._links.deploy.href).then(
                     function (response) {
-                        //Success, check if everything worked well
-                        if (!response.data.success) {
-                            vm.deploymentState = 'UNKNOWN';
-                            NotificationService.notify('Error during deployment: ' + response.data.globalMessage, 'error');
-                            return;
-                        }
                         //Notify user
                         vm.deploymentState = 'DEPLOYED';
                         NotificationService.notify('Component deployed successfully.', 'success');
@@ -159,6 +159,7 @@ app.controller('ComponentDetailsController',
                     }).then(function () {
                     //Finally hide the waiting screen
                     hideDeploymentWaitingScreen();
+                    $scope.$apply();
                 });
             }
 
@@ -169,16 +170,9 @@ app.controller('ComponentDetailsController',
             function undeploy() {
                 //Show waiting screen
                 showDeploymentWaitingScreen("Undeploying...");
-
                 //Execute undeployment request
                 ComponentService.undeploy(componentDetails._links.deploy.href).then(
                     function (response) {
-                        //Success, check if everything worked well
-                        if (!response.data.success) {
-                            vm.deploymentState = 'UNKNOWN';
-                            NotificationService.notify('Error during undeployment: ' + response.data.globalMessage, 'error');
-                            return;
-                        }
                         //Notify user
                         vm.deploymentState = 'READY';
                         NotificationService.notify('Component undeployed successfully.', 'success');
@@ -190,6 +184,7 @@ app.controller('ComponentDetailsController',
                     }).then(function () {
                     //Finally hide the waiting screen
                     hideDeploymentWaitingScreen();
+                    $scope.$apply();
                 });
             }
 
@@ -205,23 +200,19 @@ app.controller('ComponentDetailsController',
                 //Execute start request
                 ComponentService.startComponent(COMPONENT_ID, COMPONENT_TYPE, vm.parameterValues)
                     .then(function (response) {
-                            //Success, check if everything worked well
-                            if (!response.data.success) {
-                                vm.deploymentState = 'UNKNOWN';
-                                NotificationService.notify('Error during starting: ' + response.data.globalMessage, 'error');
-                                return;
-                            }
                             //Notify user
                             vm.deploymentState = 'RUNNING';
                             NotificationService.notify('Component started successfully.', 'success');
                         },
                         function (response) {
-                            //Failure
-                            vm.deploymentState = 'UNKNOWN';
-                            NotificationService.notify('Starting failed.', 'error');
+                            //Failure, check status code of response
+                            if (response.status !== 400) {
+                                vm.deploymentState = 'UNKNOWN';
+                            }
                         }).then(function () {
                     //Finally hide the waiting screen
                     hideDeploymentWaitingScreen();
+                    $scope.$apply();
                 });
             }
 
@@ -235,12 +226,6 @@ app.controller('ComponentDetailsController',
 
                 //Execute stop request
                 ComponentService.stopComponent(COMPONENT_ID, COMPONENT_TYPE).then(function (response) {
-                        //Success, check if everything worked well
-                        if (!response.data.success) {
-                            vm.deploymentState = 'UNKNOWN';
-                            NotificationService.notify('Error during stopping: ' + response.data.globalMessage, 'error');
-                            return;
-                        }
                         //Notify user
                         vm.deploymentState = 'DEPLOYED';
                         NotificationService.notify('Component stopped successfully.', 'success');
@@ -252,6 +237,7 @@ app.controller('ComponentDetailsController',
                     }).then(function () {
                     //Finally hide the waiting screen
                     hideDeploymentWaitingScreen();
+                    $scope.$apply();
                 });
             }
 
@@ -265,11 +251,13 @@ app.controller('ComponentDetailsController',
              * order, false in ascending order. By default, the logs are retrieved in ascending
              * order ([oldest log] --> ... --> [most recent log])
              * @param unit The unit in which the values are supposed to be retrieved
+             * @param startTime Start time for filtering
+             * @param endTime End time for filtering
              * @returns A promise that passes the logs as a parameter
              */
-            function retrieveComponentData(numberLogs, descending, unit) {
+            function retrieveComponentData(numberLogs, descending, unit, startTime, endTime) {
                 //Set default order
-                var order = 'asc';
+                let order = 'asc';
 
                 //Check for user option
                 if (descending) {
@@ -277,9 +265,11 @@ app.controller('ComponentDetailsController',
                 }
 
                 //Initialize parameters for the server request
-                var pageDetails = {
+                let pageDetails = {
                     sort: 'time,' + order,
-                    size: numberLogs
+                    size: numberLogs,
+                    startTime: startTime || "",
+                    endTime: endTime || ""
                 };
 
                 //Perform the server request in order to retrieve the data
@@ -359,7 +349,7 @@ app.controller('ComponentDetailsController',
                 function getStats(unit) {
                     return ComponentService.getValueLogStats(COMPONENT_ID, COMPONENT_TYPE_URL, unit).then(function (response) {
                         //Success, pass statistics data
-                        return response.data;
+                        return response;
                     }, function (response) {
                         //Failure
                         NotificationService.notify('Could not load value log statistics.', 'error');
@@ -455,15 +445,21 @@ app.controller('ComponentDetailsController',
              */
             function initParameters() {
                 //Retrieve all formal parameters for this component
-                var requiredParams = componentDetails._embedded.adapter.parameters;
+                let requiredParams = componentDetails.operator.parameters;
+
 
                 //Iterate over all parameters
-                for (var i = 0; i < requiredParams.length; i++) {
+                for (let i = 0; i < requiredParams.length; i++) {
                     //Set empty default values for these parameters
-                    var value = "";
+                    let value = "";
 
-                    if (requiredParams[i].type == "Switch") {
+                    if (requiredParams[i].type === "Switch") {
                         value = false;
+                    }
+                    if (requiredParams[i].name === "device_code") {
+                        console.log("Requesting code for required parameter device_code.");
+                        value = getDeviceCode();
+                        continue;
                     }
 
                     //For each parameter, add a tuple (name, value) to the globally accessible parameter array
@@ -472,6 +468,25 @@ app.controller('ComponentDetailsController',
                         "value": value
                     });
                 }
+            }
+
+            /**
+             * Retrieve authorization code for the device from the OAuth Authorization server.
+             */
+            function getDeviceCode() {
+                fetch(location.origin + '/MBP/oauth/authorize?client_id=device-client&response_type=code&scope=write', {
+                    headers: {
+                        // Basic http authentication with username "device-client" and the according password from MBP
+                        'Authorization': 'Basic ZGV2aWNlLWNsaWVudDpkZXZpY2U='
+                    }
+                }).then(function (response) {
+                    let chars = response.url.split('?');
+                    let code = chars[1].split('=');
+                    vm.parameterValues.push({
+                        "name": "device_code",
+                        "value": code[1]
+                    });
+                });
             }
 
             /**

@@ -1,69 +1,116 @@
-(function() {
-  'use strict';
+/**
+ * Provides services for managing users.
+ */
+app.factory('UserService', ['$rootScope', '$location', '$cookieStore', 'HttpService', 'ENDPOINT_URI',
+    function ($rootScope, $location, $cookieStore, HttpService, ENDPOINT_URI) {
 
-  angular
-    .module('app')
-    .factory('UserService', UserService);
+        const URL_LOGIN_SUFFIX = '/users/login';
+        const URL_PROMOTE_SUFFIX = '/promote';
+        const URL_DEGRADE_SUFFIX = '/degrade';
+        const URL_CHANGE_PASSWORD_SUFFIX = '/change_password';
 
-  UserService.$inject = ['$http', 'ENDPOINT_URI', 'BASE_URI'];
+        function loginUser(username, password) {
+            return HttpService.postRequest(ENDPOINT_URI + URL_LOGIN_SUFFIX, {
+                "username": username,
+                "password": password
+            }).then(function (userData) {
+                //Sanitize user data
+                userData = userData || [];
 
-  function UserService($http, ENDPOINT_URI, BASE_URI) {
-    var service = {};
+                //Enable authorization locally
+                setUserData(username, userData);
 
-    service.Authenticate = Authenticate;
-    service.Logout = Logout;
-    service.GetAll = GetAll;
-    service.GetByUsername = GetByUsername;
-    service.Create = Create;
-    service.Update = Update;
-    service.Delete = Delete;
+                //Redirect
+                $location.path('/');
+            });
+        }
 
-    return service;
+        function logoutUser() {
+            //Clear user data
+            clearUserData();
+        }
 
-    function Authenticate(user) {
-      return $http.post(ENDPOINT_URI + '/authenticate', user).then(handleSuccess, handleError);
-    }
+        function getAllUsers() {
+            return HttpService.getRequest(ENDPOINT_URI + '/users');
+        }
 
-    function Logout() {
-      return $http.get(BASE_URI + 'logout').then(handleSuccess, handleError);
-    }
+        function getByUsername(username) {
+            return HttpService.getRequest(ENDPOINT_URI + '/users/' + username);
+        }
 
-    function GetAll() {
-      return $http.get(ENDPOINT_URI + '/users').then(handleSuccess, handleError);
-    }
+        function createUser(user) {
+            return HttpService.postRequest(ENDPOINT_URI + '/users', user);
+        }
 
-    function GetByUsername(username) {
-      return $http.get(ENDPOINT_URI + '/users/' + username).then(handleSuccess, handleError);
-    }
+        function updateUser(user) {
+            return HttpService.putRequest(ENDPOINT_URI + '/users/', user);
+        }
 
-    function Create(user) {
-      return $http.post(ENDPOINT_URI + '/users', user).then(handleSuccess, handleError);
-    }
+        function deleteUser(username) {
+            return HttpService.deleteRequest(ENDPOINT_URI + '/users/' + username);
+        }
 
-    function Update(user) {
-      return $http.put(ENDPOINT_URI + '/users/', user).then(handleSuccess, handleError);
-    }
+        function promoteUser(userId) {
+            return HttpService.postRequest(ENDPOINT_URI + '/users/' + userId + URL_PROMOTE_SUFFIX);
+        }
 
-    function Delete(username) {
-      return $http.delete(ENDPOINT_URI + '/users/' + username).then(handleSuccess, handleError);
-    }
+        function degradeUser(userId) {
+            return HttpService.postRequest(ENDPOINT_URI + '/users/' + userId + URL_DEGRADE_SUFFIX);
+        }
 
-    function handleSuccess(res) {
-      return {
-        success: true,
-        message: res.headers('X-MBP-alert'),
-        data: res.data
-      };
-    }
+        function changeUserPassword(userId, newPassword) {
+            return HttpService.postRequest(ENDPOINT_URI + '/users/' + userId + URL_CHANGE_PASSWORD_SUFFIX,
+                {'password': newPassword});
+        }
 
-    function handleError(res) {
-      return {
-        success: false,
-        message: res.headers('X-MBP-error'),
-        status: res.status
-      };
+        /**
+         * [Private]
+         * Takes data about the current user and stores it in the root scope for easy access. In addition,
+         * a cookie is created to remember to user data across switching pages.
+         *
+         * @param username The username of the current user
+         * @param userData Additional data about the current user
+         */
+        function setUserData(username, userData) {
+            //Sanitize user data
+            userData = userData || {};
 
-    }
-  }
+            //Store user data in root scope for easy access
+            $rootScope.globals = {
+                currentUser: {
+                    username: username,
+                    userData: userData
+                }
+            };
 
-})();
+            // Store user details in globals cookie that keeps user logged in for one week
+            let cookieExp = new Date();
+            cookieExp.setDate(cookieExp.getDate() + 7);
+            $cookieStore.put('globals', $rootScope.globals, {
+                expires: cookieExp
+            });
+        }
+
+        /**
+         * [Private]
+         * Clears the data about the current user from the root scope and also removes to corresponding cookie.
+         */
+        function clearUserData() {
+            $rootScope.globals = {};
+            $cookieStore.remove('globals');
+        }
+
+        //Expose
+        return {
+            loginUser: loginUser,
+            logoutUser: logoutUser,
+            getAllUsers: getAllUsers,
+            getByUsername: getByUsername,
+            createUser: createUser,
+            updateUser: updateUser,
+            deleteUser: deleteUser,
+            promoteUser: promoteUser,
+            degradeUser: degradeUser,
+            changeUserPassword: changeUserPassword
+        };
+    }]);

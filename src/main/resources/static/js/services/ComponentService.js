@@ -3,8 +3,8 @@
 /**
  * Provides services for dealing with components, retrieving their states and calculating stats.
  */
-app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
-    function ($http, $resource, $q, ENDPOINT_URI) {
+app.factory('ComponentService', ['HttpService', '$resource', '$q', 'ENDPOINT_URI',
+    function (HttpService, $resource, $q, ENDPOINT_URI) {
 
         //URL prefix for requests
         const URL_PREFIX = ENDPOINT_URI + '/';
@@ -17,10 +17,9 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
         //URL suffix under which the deployment state of a certain component can be retrieved
         const URL_GET_COMPONENT_STATE_SUFFIX = '/state/';
         //URL suffix under which the deployment state of a certain component can be retrieved
-        const URL_GET_VALUE_LOG_STATS_SUFFIX = '/stats/';
+        const URL_GET_VALUE_LOG_STATS_SUFFIX = '/stats';
         //URL suffix under which the value logs of a certain component can be retrieved
         const URL_VALUE_LOGS_SUFFIX = '/valueLogs';
-
 
         /**
          * [Public]
@@ -33,7 +32,7 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function startComponent(componentId, componentType, parameterList) {
-            return $http.post(URL_START_COMPONENT + componentType + '/' + componentId, parameterList);
+            return HttpService.postRequest(URL_START_COMPONENT + componentType + '/' + componentId, parameterList, null);
         }
 
 
@@ -46,9 +45,16 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function stopComponent(componentId, componentType) {
-            return $http.post(URL_STOP_COMPONENT + componentType + '/' + componentId);
+            return HttpService.postRequest(URL_STOP_COMPONENT + componentType + '/' + componentId, null, null);
         }
 
+        function deployComponent(url) {
+            return HttpService.postRequest(url, {}, null);
+        }
+
+        function undeployComponent(url) {
+            return HttpService.deleteRequest(url);
+        }
 
         /**
          * [Public]
@@ -58,7 +64,7 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function getAllComponentStates(component) {
-            return $http.get(URL_PREFIX + component + URL_GET_ALL_COMPONENT_STATES_SUFFIX);
+            return HttpService.getRequest(URL_PREFIX + component + URL_GET_ALL_COMPONENT_STATES_SUFFIX);
         }
 
         /**
@@ -70,7 +76,7 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function getComponentState(componentId, component) {
-            return $http.get(URL_PREFIX + component + URL_GET_COMPONENT_STATE_SUFFIX + componentId);
+            return HttpService.getRequest(URL_PREFIX + component + URL_GET_COMPONENT_STATE_SUFFIX + componentId);
         }
 
         /**
@@ -84,7 +90,7 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function getValueLogStats(componentId, component, unit) {
-            var parameters = {};
+            let parameters = {};
 
             //Check if unit was provided
             if (unit) {
@@ -92,10 +98,9 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
             }
 
             //Execute request
-            return $http.get(URL_PREFIX + component + URL_GET_VALUE_LOG_STATS_SUFFIX + componentId, {
-                params: parameters
-            });
+            return HttpService.getRequest(URL_PREFIX + component + '/' + componentId + URL_GET_VALUE_LOG_STATS_SUFFIX, parameters);
         }
+
 
         /**
          * [Public]
@@ -108,19 +113,16 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          * @returns {*}
          */
         function getValueLogs(componentId, component, pageDetails, unit) {
-            var parameters = pageDetails;
-
+            let parameters = pageDetails;
             //Check if unit was provided
             if (unit) {
                 parameters.unit = unit;
             }
 
             //Execute request
-            return $http.get(URL_PREFIX + component + 's/' + componentId + URL_VALUE_LOGS_SUFFIX, {
-                params: parameters
-            }).then(function (response) {
+            return HttpService.getRequest(URL_PREFIX + component + 's/' + componentId + URL_VALUE_LOGS_SUFFIX, parameters).then(function (response) {
                 //Process received logs in order to be able to display them in a chart
-                return processValueLogs(response.data.content);
+                return processValueLogs(response.content);
             });
         }
 
@@ -135,7 +137,7 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          */
         function deleteValueLogs(componentId, component) {
             //Execute request
-            return $http.delete(URL_PREFIX + component + 's/' + componentId + URL_VALUE_LOGS_SUFFIX);
+            return HttpService.deleteRequest(URL_PREFIX + component + 's/' + componentId + URL_VALUE_LOGS_SUFFIX, null, null);
         }
 
 
@@ -148,17 +150,16 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          */
         function processValueLogs(receivedLogs) {
             //Array that stores the finally formatted value logs
-            var finalValues = [];
+            let finalValues = [];
 
             //Iterate over all received value logs
-            for (var i = 0; i < receivedLogs.length; i++) {
+            for (let i = 0; i < receivedLogs.length; i++) {
                 //Extract value and time for the current log and format them
-                var value = receivedLogs[i].value * 1;
-                var time = receivedLogs[i].time.epochSecond * 1000;
-                time = dateToString(new Date(time));
+                let value = receivedLogs[i].value * 1;
+                let time = receivedLogs[i].time.epochSecond * 1000;
 
                 //Create a (time, value) tuple and add it to the array
-                var tuple = [time, value];
+                let tuple = [time, value];
                 finalValues.push(tuple);
             }
 
@@ -175,16 +176,16 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
          */
         function dateToString(date) {
             //Retrieve all properties from the date object
-            var year = date.getFullYear();
-            var month = '' + (date.getMonth() + 1);
-            var day = '' + date.getDate();
-            var hours = '' + date.getHours();
-            var minutes = '' + date.getMinutes();
-            var seconds = '' + date.getSeconds();
+            let year = date.getFullYear();
+            let month = '' + (date.getMonth() + 1);
+            let day = '' + date.getDate();
+            let hours = '' + date.getHours();
+            let minutes = '' + date.getMinutes();
+            let seconds = '' + date.getSeconds();
 
             //Add a leading zero (if necessary) to all properties except the year
-            var values = [day, month, hours, minutes, seconds];
-            for (var i = 0; i < values.length; i++) {
+            let values = [day, month, hours, minutes, seconds];
+            for (let i = 0; i < values.length; i++) {
                 if (values[i].length < 2) {
                     values[i] = '0' + values[i];
                 }
@@ -209,43 +210,8 @@ app.factory('ComponentService', ['$http', '$resource', '$q', 'ENDPOINT_URI',
             deleteValueLogs: deleteValueLogs,
             startComponent: startComponent,
             stopComponent: stopComponent,
-            isDeployed: function (url) {
-                return $http({
-                    method: 'GET',
-                    url: url
-                }).then(
-                    function (response) {
-                        if (response.data !== undefined) {
-                            console.log('isDeployed got data ' + response.data);
-                            return response.data === true
-                                || response.data === 'true'
-                                || response.data.status === 'true';
-                        } else {
-                            console.log('isDeployed invalid data');
-                            console.log(response);
-                            return $q.reject(response);
-                        }
-                    },
-                    function (response) {
-                        console.log('isDeployed error');
-                        return $q.reject(response);
-                    });
-            },
-
-            deploy: function (url) {
-                return $http({
-                    method: 'POST',
-                    url: url,
-                    headers: {'Content-Type': 'application/json'}
-                });
-            },
-
-            undeploy: function (url) {
-                return $http({
-                    method: 'DELETE',
-                    url: url
-                });
-            }
+            deploy: deployComponent,
+            undeploy: undeployComponent
         };
     }
 ]);

@@ -5,15 +5,15 @@
  */
 app.controller('RuleActionListController',
     ['$scope', '$controller', '$interval', 'ruleActionList', 'ruleActionTypesList', 'actuatorList', 'sensorList',
-        'addRuleAction', 'deleteRuleAction', 'RuleService', 'NotificationService',
+        'addRuleAction', 'deleteRuleAction', 'RuleService', 'NotificationService', 'RuleActionService',
         function ($scope, $controller, $interval, ruleActionList, ruleActionTypesList, actuatorList, sensorList,
-                  addRuleAction, deleteRuleAction, RuleService, NotificationService) {
+                  addRuleAction, deleteRuleAction, RuleService, NotificationService, RuleActionService) {
             //Array of colors to be used for the different rule action types
             const ACTION_TYPES_COLORS = ['bg-pink', 'bg-purple', 'bg-deep-purple', 'bg-indigo', 'bg-blue',
                 'bg-light-blue', 'bg-cyan', 'bg-teal', 'bg-green', 'bg-light-green', 'bg-lime', 'bg-yellow',
                 'bg-amber', 'bg-orange', 'bg-deep-orange'];
 
-            var vm = this;
+            let vm = this;
 
             vm.ruleActionTypesList = ruleActionTypesList;
             vm.actuatorList = actuatorList;
@@ -34,11 +34,31 @@ app.controller('RuleActionListController',
                 }
 
                 //Extend rule action types for color
-                for (var i = 0; i < ruleActionTypesList.length; i++) {
-                    var colorIndex = i % ACTION_TYPES_COLORS.length;
+                for (let i = 0; i < ruleActionTypesList.length; i++) {
+                    let colorIndex = i % ACTION_TYPES_COLORS.length;
                     ruleActionTypesList[i].color = ACTION_TYPES_COLORS[colorIndex];
                 }
+
+                // Refresh rule action select picker when the modal is opened
+                $('.modal').on('shown.bs.modal', function () {
+                    refreshSelectPicker()
+                });
+                // Refresh select pickers when action type is changed
+                $('.selectpicker').on('changed.bs.select', function () {
+                    refreshSelectPicker()
+                });
+
             })();
+
+            /**
+             * Refresh select pickers
+             */
+            function refreshSelectPicker() {
+                $('.selectpicker').selectpicker({
+                    showTick: true,
+                    refresh: true
+                });
+            }
 
             /**
              * [Public]
@@ -50,13 +70,7 @@ app.controller('RuleActionListController',
             function testRuleAction(actionId) {
                 //Execute request
                 RuleService.testRuleAction(actionId).then(function (response) {
-                    if (response.data && response.data.success) {
-                        //Test succeeded
-                        NotificationService.notify("Action test succeeded.", "success")
-                    } else {
-                        //Test failed
-                        NotificationService.notify("Action test failed.", "warning")
-                    }
+                    NotificationService.notify("Action test succeeded.", "success")
                 }, function (response) {
                     //Server request failed
                     NotificationService.notify("Unable to perform action test.", "error")
@@ -89,27 +103,53 @@ app.controller('RuleActionListController',
              * @returns A promise of the user's decision
              */
             function confirmDelete(data) {
-                var ruleActionId = data.id;
-                var ruleActionName = "";
+                let ruleActionId = data.id;
+                let ruleActionName = "";
 
                 //Determines the rule action's name by checking the list
-                for (var i = 0; i < ruleActionList.length; i++) {
+                for (let i = 0; i < ruleActionList.length; i++) {
                     if (ruleActionId === ruleActionList[i].id) {
                         ruleActionName = ruleActionList[i].name;
                         break;
                     }
                 }
 
-                //Show the alert to the user and return the resulting promise
-                return Swal.fire({
-                    title: 'Delete rule action',
-                    type: 'warning',
-                    html: "Are you sure you want to delete rule action \"" + ruleActionName + "\"?",
-                    showCancelButton: true,
-                    confirmButtonText: 'Delete',
-                    confirmButtonClass: 'bg-red',
-                    focusConfirm: false,
-                    cancelButtonText: 'Cancel'
+                //Ask the server for all rules that use this rule action
+                return RuleActionService.getUsingRules(data.id).then(function (result) {
+                    //Check if list is empty
+                    if (result.length > 0) {
+                        //Not empty, entity cannot be deleted
+                        let errorText = "The rule action <strong>" + ruleActionName + "</strong> is still used by the " +
+                            "following rules and thus cannot be deleted:<br/><br/>";
+
+                        //Iterate over all affected entities
+                        for (let i = 0; i < result.length; i++) {
+                            errorText += "- " + result[i].name + "<br/>";
+                        }
+
+                        // Show error message
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Deletion impossible',
+                            html: errorText
+                        })
+
+                        // Return new promise as result
+                        return Promise.resolve({value: false});
+                    }
+
+                    //Show confirm prompt to the user and return the resulting promise
+                    return Swal.fire({
+                        title: 'Delete rule action',
+                        icon: 'warning',
+                        html: "Are you sure you want to delete the rule action \"<strong>" + ruleActionName +
+                            "</strong>\"?",
+                        showCancelButton: true,
+                        confirmButtonText: 'Delete',
+                        confirmButtonClass: 'bg-red',
+                        focusConfirm: false,
+                        cancelButtonText: 'Cancel'
+                    });
                 });
             }
 
@@ -121,6 +161,7 @@ app.controller('RuleActionListController',
                 }),
                 addRuleActionCtrl: $controller('AddItemController as addRuleActionCtrl', {
                     $scope: $scope,
+                    entity: 'rule action',
                     addItem: addRuleAction
                 }),
                 deleteRuleActionCtrl: $controller('DeleteItemController as deleteRuleActionCtrl', {
@@ -140,7 +181,7 @@ app.controller('RuleActionListController',
                 },
                 function () {
                     //Callback
-                    var ruleAction = vm.addRuleActionCtrl.result;
+                    let ruleAction = vm.addRuleActionCtrl.result;
 
                     //Make sure the result is valid
                     if (ruleAction) {
@@ -161,7 +202,7 @@ app.controller('RuleActionListController',
                 },
                 function () {
                     //Callback
-                    var id = vm.deleteRuleActionCtrl.result;
+                    let id = vm.deleteRuleActionCtrl.result;
                     vm.ruleActionListCtrl.removeItem(id);
                 }
             );

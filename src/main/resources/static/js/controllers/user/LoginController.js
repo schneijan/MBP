@@ -1,39 +1,37 @@
-(function() {
-  'use strict';
+app.controller('LoginController', ['$scope', '$location', 'UserService',
+    function ($scope, $location, UserService) {
+        let vm = this;
 
-  angular
-    .module('app')
-    .controller('LoginController', LoginController);
+        /**
+         * Initializing function, sets up basic things.
+         */
+        (function initController() {
+            //Reset login status
+            UserService.logoutUser();
 
-  LoginController.$inject = ['$location', 'AuthenticationService', 'FlashService'];
+            //Hide loader
+            vm.dataLoading = false;
+        })();
 
-  function LoginController($location, AuthenticationService, FlashService) {
-    var vm = this;
+        /**
+         * [Public]
+         * Performs a server request in order to login a user with the entered form data.
+         */
+        function login() {
+            //Show loader
+            vm.dataLoading = true;
 
-    vm.login = login;
-
-    (function initController() {
-      // reset login status
-      AuthenticationService.ClearCredentials();
-      AuthenticationService.Logout();
-    })();
-
-    function login() {
-      vm.dataLoading = true;
-      AuthenticationService.Login(vm.username, vm.password, function(response) {
-        if (response.success) {
-          AuthenticationService.SetCredentials(vm.username, vm.password);
-          $location.path('/');
-        } else {
-          if (response.status === 403) {
-            FlashService.Error("Authorization error!");
-          } else {
-            FlashService.Error(response.message);
-          }
-          vm.dataLoading = false;
+            //Perform login
+            UserService.loginUser(vm.username, vm.password).always(function () {
+                //Hide loader
+                vm.dataLoading = false;
+                $scope.$apply();
+            });
         }
-      });
-    };
-  }
 
-})();
+        //Expose
+        angular.extend(vm, {
+            login: login
+        });
+    }]
+);

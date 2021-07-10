@@ -4,8 +4,8 @@
  * Controller for the rule triggers list page.
  */
 app.controller('RuleTriggerListController',
-    ['$scope', '$controller', '$interval', 'ruleTriggerList', 'addRuleTrigger', 'deleteRuleTrigger', 'actuatorList', 'sensorList', 'monitoringComponentList',
-        function ($scope, $controller, $interval, ruleTriggerList, addRuleTrigger, deleteRuleTrigger, actuatorList, sensorList, monitoringComponentList) {
+    ['$scope', '$controller', '$interval', 'ruleTriggerList', 'addRuleTrigger', 'deleteRuleTrigger', 'actuatorList', 'sensorList', 'monitoringComponentList', 'RuleTriggerService', 'NotificationService',
+        function ($scope, $controller, $interval, ruleTriggerList, addRuleTrigger, deleteRuleTrigger, actuatorList, sensorList, monitoringComponentList, RuleTriggerService, NotificationService) {
             //Selectors for various DOM elements
             const SELECTOR_ADD_TRIGGER_CARD = "#add-trigger-card";
             const SELECTOR_WIZARD_CONTAINER = "#add-trigger-wizard";
@@ -53,6 +53,7 @@ app.controller('RuleTriggerListController',
              * @returns A promise of the user's decision
              */
             function confirmDelete(data) {
+
                 let ruleTriggerId = data.id;
                 let ruleTriggerName = "";
 
@@ -64,16 +65,42 @@ app.controller('RuleTriggerListController',
                     }
                 }
 
-                //Show the alert to the user and return the resulting promise
-                return Swal.fire({
-                    title: 'Delete rule trigger',
-                    type: 'warning',
-                    html: "Are you sure you want to delete rule trigger \"" + ruleTriggerName + "\"?",
-                    showCancelButton: true,
-                    confirmButtonText: 'Delete',
-                    confirmButtonClass: 'bg-red',
-                    focusConfirm: false,
-                    cancelButtonText: 'Cancel'
+                //Ask the server for all rules that use this rule trigger
+                return RuleTriggerService.getUsingRules(ruleTriggerId).then(function (result) {
+                    //Check if list is empty
+                    if (result.length > 0) {
+                        //Not empty, entity cannot be deleted
+                        let errorText = "The rule condition <strong>" + ruleTriggerName + "</strong> is still used by " +
+                            "the following rules and thus cannot be deleted:<br/><br/>";
+
+                        //Iterate over all affected entities
+                        for (let i = 0; i < result.length; i++) {
+                            errorText += "- " + result[i].name + "<br/>";
+                        }
+
+                        // Show error message
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Deletion impossible',
+                            html: errorText
+                        })
+
+                        // Return new promise as result
+                        return Promise.resolve({value: false});
+                    }
+
+                    //Show confirm prompt to the user and return the resulting promise
+                    return Swal.fire({
+                        title: 'Delete rule condition',
+                        icon: 'warning',
+                        html: "Are you sure you want to delete the rule condition \"<strong>" + ruleTriggerName +
+                            "</strong>\"?",
+                        showCancelButton: true,
+                        confirmButtonText: 'Delete',
+                        confirmButtonClass: 'bg-red',
+                        focusConfirm: false,
+                        cancelButtonText: 'Cancel'
+                    });
                 });
             }
 
@@ -188,7 +215,7 @@ app.controller('RuleTriggerListController',
 
                             Swal.fire({
                                 title: 'Step back',
-                                type: 'warning',
+                                icon: 'warning',
                                 html: "Are you sure you want to step back? All changes done to the query will be lost!",
                                 showCancelButton: true,
                                 confirmButtonText: 'Step back',
@@ -289,6 +316,7 @@ app.controller('RuleTriggerListController',
                 }),
                 addRuleTriggerCtrl: $controller('AddItemController as addRuleTriggerCtrl', {
                     $scope: $scope,
+                    entity: 'rule trigger',
                     addItem: addRuleTrigger
                 }),
                 deleteRuleTriggerCtrl: $controller('DeleteItemController as deleteRuleTriggerCtrl', {
