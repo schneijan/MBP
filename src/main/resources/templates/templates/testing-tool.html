@@ -1,0 +1,620 @@
+<div class="row clearfix">
+    <div class="col-lg-12">
+        <div class="row clearfix">
+            <div class="jumbotron" style="background-color:white">
+                <h2>Welcome!</h2>
+                <p>Through this Testing-Tool you have the possibility to test your IoT-Applications!<br/></p>
+                <p>Follow the given steps to create different tests:</p>
+                <p> &ensp; &ensp; Step 1 - Register the <a href="view/operators"
+                                                           target="_blank"><span>extraction/control operators</span></a>
+                    for
+                    the simulation of the Sensors and Actuators.</p>
+                <p> &ensp; &ensp; Step 2 - <a href="#addDevice" data-toggle="modal" data-target="#addDevice"><span>Register</span>
+                </a> the Testing Device, Testing Actuator and the necessary Sensor-Simulators you need for the test of
+                    your IoT-Application.
+
+                <p> &ensp; &ensp; Step 3 - Define the <a href="view/rules" target="_blank"><span>rules</span></a> that
+                    are necessary for the your IoT-Application.</p>
+                <p>&ensp; &ensp; Step 4 - Register the new test.</p>
+                <p> &ensp; &ensp; Step 5 - Start the test and wait until the simulation is finished.</p>
+                <p> &ensp; &ensp; Step 6 - Download the test report to find out the result of the test.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="row clearfix">
+            <div> {{result}}</div>
+        </div>
+    </div>
+    <!-- List of Tests Card -->
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="row" style="margin-left: 0px; margin-right: 0px; padding: 5px">
+                <div class="col-lg-12 focused" style="padding: 5px">
+                    <div class="header">
+                        <div class="col-lg-11">
+                            <h2>Tests</h2>
+                        </div>
+                        <div class="align-right">
+                            <button id="add-device" class="btn bg-blue btn-circle waves-effect waves-circle waves-float"
+                                    data-toggle="modal"
+                                    data-target="#addTestingModal" data-backdrop="static" data-keyboard="false">
+                                <i class="material-icons">add</i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="body">
+                <table class="table table-hover" st-table="displayedCollection" st-safe-src="testListCtrl.items">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Sensor(s)</th>
+                        <th>Rule(s)</th>
+                        <th>Owner</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr id="{{item._id}}" ng-repeat="item in displayedCollection">
+                        <td>
+                            <a ng-href="{{detailsLink(item)}}">{{item.name}}</a>&nbsp;
+                            <i ng-show="item.wasModelled" class="material-icons" style="vertical-align: bottom;">view_quilt</i>
+                        </td>
+                        <td>{{item.type.join(', ')}}</td>
+                        <td>{{item.ruleNames.join(', ')}}</td>
+                        <td>{{item.ownerName ? item.ownerName : "None"}}</td>
+                        <td>
+                            <form ng-submit="deleteTestCtrl.deleteItem()" style="margin-top: 3px;">
+                                <button type="submit" class="btn btn-danger m-t-0 waves-effect"
+                                        ng-click="deleteTestCtrl.item.id = item.id">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr ng-show="testListCtrl.items.length === 0">
+                        <td>No test registered.</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td class="text-center" st-pagination="" st-items-by-page="10" colspan="4"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- #END# List of Tests Card -->
+
+        <!-- Modal -->
+        <div class="modal fade" id="addTestingModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Register a new test
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </h5>
+                    </div>
+                    <form id="addTestingForm" ng-submit="addTestCtrl.addItem()">
+                        <fieldset id="testing-form">
+                            <div class="modal-body">
+                                <!-- "global" error for addItem -->
+                                <div class="form-group" ng-class="{'has-error' : addTestCtrl.item.errors.global}">
+			                    <span class="alert alert-danger" ng-show="addTestCtrl.item.errors.global">
+			                      {{addTestCtrl.item.errors.global}}
+			                    </span>
+                                </div>
+                                <!-- item.name group -->
+                                <div class="form-group" ng-class="{'has-error' : addTestCtrl.item.errors.name }">
+                                    <div class="form-line" ng-class="{'focused error' : addTestCtrl.item.errors.name }">
+                                        <input class="form-control" type="text"
+                                               placeholder="Name *" ng-model="addTestCtrl.item.name"/>
+                                    </div>
+                                    <span class="help-block"
+                                          ng-show="addTestCtrl.item.errors.name">{{addTestCtrl.item.errors.name}}</span>
+                                </div>
+
+                                <!-- items.sensors group -->
+
+                                <div class="form-group" ng-class="{'has-error' : addTestCtrl.item.errors.sensors }">
+                                    <div class="form-line"
+                                         ng-class="{'focused error' : addTestCtrl.item.errors.sensors }">
+                                        <h3>Sensor Simulators:
+                                            <button type="button" id="addSimulator"
+                                                    class="btn btn-secondary m-t-0 waves-effect"
+                                                    ng-click="ctrl.addSimulators()" value="+">
+                                                <i class="material-icons">add</i>
+                                            </button>
+                                        </h3>
+                                        <div ng-show="ctrl.addSimulator">
+                                            <select class="form-control selectpicker"
+                                                    title="Select sensor type to be simulated *"
+                                                    data-header="Select sensor type to be simulated *"
+                                                    ng-model="ctrl.selectedSensors"
+                                                    ng-options="sensor for sensor in availableSensors"
+                                                    multiple>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <span class="help-block"
+                                          ng-show="addTestCtrl.item.errors.sensors">{{addTestCtrl.item.errors.sensors}}</span>
+
+                                </div>
+                                <div class="form-group" ng-class="{'has-error' : addTestCtrl.item.errors.sensors }">
+                                    <div class="form-line"
+                                         ng-class="{'focused error' : addTestCtrl.item.errors.sensors }">
+                                        <h3>Real Sensor:
+                                            <button type="button" id="addRealSensor"
+                                                    class="btn btn-secondary m-t-0 waves-effect"
+                                                    ng-click="ctrl.addRealSensor()" value="+">
+                                                <i class="material-icons">add</i>
+                                            </button>
+                                        </h3>
+                                        <div ng-show="ctrl.addRealSensors">
+                                            <select class="form-control selectpicker"
+                                                    title="Select sensor type to be added to the test*"
+                                                    data-header="Select sensor type to be added to the test*"
+                                                    ng-model="ctrl.selectedRealSensor"
+                                                    ng-options="sensor as (sensor.name) for sensor in realSensorList"
+                                                    multiple>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <span class="help-block"
+                                          ng-show="addTestCtrl.item.errors.sensors">{{addTestCtrl.item.errors.sensors}}</span>
+
+                                </div>
+
+                                <div ng-repeat="realSensor in ctrl.selectedRealSensor" ng-init="row=$index">
+                                    <div ng-show="realSensor.operator.parameters.length > 0">
+                                        <h3>Configuration Real Sensor: {{realSensor.name}}</h3>
+                                        <table class="table parameter-table">
+                                            <thead></thead>
+                                            <tbody>
+                                            <tr ng-repeat="parameter in realSensor.operator.parameters">
+                                                <td>
+                                                    <label>{{parameter.name}}:</label><br/>
+                                                    <small ng-show="parameter.mandatory">(required)</small>
+                                                </td>
+                                                <td>
+                                                    <div ng-switch="parameter.type">
+                                                        <div ng-switch-when="Text">
+                                                            <input class="form-control" type="text"
+                                                                   ng-required="parameter.mandatory"
+                                                                   ng-model="ctrl.parameterVal[realSensor.name][$index]"/>
+                                                        </div>
+                                                        <div ng-switch-when="Number">
+                                                            <input class="form-control" type="number"
+                                                                   ng-required="parameter.mandatory"
+                                                                   ng-model="ctrl.parameterVal[realSensor.name][$index]"/>
+                                                        </div>
+                                                        <div class="switch" ng-switch-when="Switch">
+                                                            <label>No
+                                                                <input type="checkbox"
+                                                                       ng-model="ctrl.parameterVal[realSensor.name][$index]">
+                                                                <span class="lever"></span>Yes</label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                            <span class="label bg-grey"
+                                                  ng-show="parameter.unit">{{parameter.unit}}</span>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="has-error" ng-show="ctrl.deployer.status.fieldErrors.parameters">
+                                            <span class="help-block focused error">{{ctrl.deployer.status.fieldErrors.parameters}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div ng-if="ctrl.selectedSensors.includes('TESTING_TemperatureSensor')">
+                                    <div class="form-line">
+                                        <h3>Configuration Temperature Sensor Simulator</h3>
+                                        <table class="table parameter-table">
+                                            <thead></thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><label>Type of simulation:*</label></td>
+                                                <td>
+                                                    <select class="form-control show-tick" id="select-event"
+                                                            name="event"
+                                                            ng-model="ctrl.config.eventTemp">
+                                                        <option value="">Select the event to be simulated</option>
+                                                        <option ng-option class="ng-binding ng-scope" value="1">
+                                                            Temperature rise
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="2">
+                                                            Temperature
+                                                            drop
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                            values
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="5">Wrong
+                                                            value type
+                                                        </option>
+                                                    </select>
+                                                </td>
+                                            <tr>
+                                                <td ng-if="ctrl.config.eventTemp == '1' ||ctrl.config.eventTemp == '2'">
+                                                    <label> Combination with an anomaly:*</label></td>
+                                                <td ng-if="ctrl.config.eventTemp == '1' ||ctrl.config.eventTemp == '2'">
+                                                    <select class="form-control show-tick" id="select-temp-Anomaly"
+                                                            name="anomaly" ng-model="ctrl.config.anomalyTemp">
+                                                        <option value="">Select the combination with an anomaly</option>
+                                                        <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                            values
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="5">Wrong
+                                                            value type
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" bvalue="6"
+                                                                selected="selected">No combination
+                                                        </option>
+                                                    </select></td>
+                                            </tr>
+                                            <tr>
+                                                <td ng-if="ctrl.config.eventTemp == '1' ||ctrl.config.eventTemp == '2'">
+                                                    <label>For which room should the temperature rise/fall be
+                                                        simulated:*</label></td>
+                                                <td ng-if="ctrl.config.eventTemp == '1' ||ctrl.config.eventTemp == '2'">
+                                                    <select class="form-control show-tick" id="select-temp-room"
+                                                            name="room" ng-model="ctrl.config.roomTemp">
+                                                        <option value="">Select a room</option>
+                                                        <option ng-option class="ng-binding ng-scope" value="a">Living
+                                                            room
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="b">Office
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="c">Bedroom
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="d">Bathroom
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="e">Kitchen
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="f">Basement
+                                                        </option>
+                                                    </select></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div ng-if="ctrl.selectedSensors.includes('TESTING_TemperatureSensorPl')">
+                                    <div class="form-line">
+                                        <h3>Configuration Planned Temperature Sensor Simulator</h3>
+                                        <table class="table parameter-table">
+                                            <thead></thead>
+                                            <tbody>
+                                            <tr>
+                                                <td><label>Type of simulation:*</label></td>
+                                                <td><select class="form-control show-tick"
+                                                            name="event"
+                                                            ng-model="ctrl.config.eventTempPl">
+                                                    <option value="">Select the event to be simulated</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="1">Temperature
+                                                        rise
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="2"> Temperature
+                                                        drop
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                        values
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="5">Wrong value
+                                                        type
+                                                    </option>
+                                                </select></td>
+                                            </tr>
+                                            <tr>
+                                                <td ng-if="ctrl.config.eventTempPl == '1' ||ctrl.config.eventTempPl == '2'">
+                                                    <label>Combination with an anomaly:*</label></td>
+                                                <td ng-if="ctrl.config.eventTempPl == '1' ||ctrl.config.eventTempPl == '2'">
+                                                    <select class="form-control show-tick"
+                                                            name="anomaly" ng-model="ctrl.config.anomalyTempPl">
+                                                        <option value="">Select the combination with an anomaly
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                            values
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="5">Wrong
+                                                            value type
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" bvalue="6"
+                                                                selected="selected">No combination
+                                                        </option>
+                                                    </select></td>
+                                            </tr>
+                                            <tr>
+                                                <td ng-if="ctrl.config.eventTempPl == '1' ||ctrl.config.eventTempPl == '2'">
+                                                    <label>For which room should the temperature rise/fall be
+                                                        simulated:*</label></td>
+                                                <td ng-if="ctrl.config.eventTempPl == '1' ||ctrl.config.eventTempPl == '2'">
+                                                    <select class="form-control show-tick"
+                                                            name="room" ng-model="ctrl.config.roomTempPl">
+                                                        <option value="">Select a room</option>
+                                                        <option ng-option class="ng-binding ng-scope" value="a">Living
+                                                            room
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="b">Office
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="c">Bedroom
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="d">Bathroom
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="e">Kitchen
+                                                        </option>
+                                                        <option ng-option class="ng-binding ng-scope" value="f">Basement
+                                                        </option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div ng-if="ctrl.selectedSensors.includes('TESTING_HumiditySensor')">
+                                    <h3>Configuration Sensor Simulator: Humidity Sensor Simulator</h3>
+                                    <table class="table parameter-table">
+                                        <thead></thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><label>Type of simulation:*</label></td>
+                                            <td><select class="form-control show-tick" id="select-hum-testCase"
+                                                        name="event"
+                                                        ng-model="ctrl.config.eventHum">
+                                                <option value="">Select the event to be simulated</option>
+                                                <option ng-option class="ng-binding ng-scope" value="1">
+                                                    Humidity rise
+                                                </option>
+                                                <option ng-option class="ng-binding ng-scope" value="2">
+                                                    Humidity decrease
+                                                </option>
+                                                <option ng-option class="ng-binding ng-scope" value="3">Outlier</option>
+                                                <option ng-option class="ng-binding ng-scope" value="4">Missing values
+                                                </option>
+                                                <option ng-option class="ng-binding ng-scope" value="5">Wrong value type
+                                                </option>
+                                            </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td ng-if="ctrl.config.eventHum == '1' ||ctrl.config.eventHum == '2'">
+                                                <label> Combination with an anomaly:*</label></td>
+                                            <td ng-if="ctrl.config.eventHum == '1' ||ctrl.config.eventHum == '2'">
+                                                <select class="form-control show-tick" id="select-hum-Anomaly"
+                                                        name="anomaly" ng-model="ctrl.config.anomalyHum">
+                                                    <option value="">Select the combination with an anomaly</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                        values
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="5">Wrong value
+                                                        type
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="6">No
+                                                        combination
+                                                    </option>
+                                                </select></td>
+                                        </tr>
+                                        <tr>
+                                            <td ng-if="ctrl.config.eventHum == '1' ||ctrl.config.eventHum == '2'">
+                                                <label>For which room should the humidity rise/fall be
+                                                    simulated:*</label></td>
+                                            <td ng-if="ctrl.config.eventHum == '1' ||ctrl.config.eventHum == '2'">
+                                                <select class="form-control show-tick" id="select-hum-room"
+                                                        name="room" ng-model="ctrl.config.roomHum">
+                                                    <option value="">Select a room</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="a">Living room
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="b">Office
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="c">Bedroom
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="d">Bathroom
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="e">Kitchen
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="f">Basement
+                                                    </option>
+                                                </select></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div ng-if="ctrl.selectedSensors.includes('TESTING_HumiditySensorPl')">
+                                    <h3>Configuration Planned Humidity Sensor Simulator</h3>
+                                    <table class="table parameter-table">
+                                        <thead></thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><label>Type of simulation:*</label></td>
+                                            <td>
+                                                <select class="form-control show-tick" name="event"
+                                                        ng-model="ctrl.config.eventHumPl">
+                                                    <option value="">Select the event to be simulated</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="1">
+                                                        Humidity rise
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="2">
+                                                        Humidity decrease
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="3">Outlier
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                        values
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="5">Wrong value
+                                                        type
+                                                    </option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td ng-if="ctrl.config.eventHumPl == '1' ||ctrl.config.eventHumPl == '2'">
+                                                <label>Combination
+                                                    with an anomaly:*</label>
+                                            </td>
+                                            <td ng-if="ctrl.config.eventHumPl == '1' ||ctrl.config.eventHumPl == '2'">
+                                                <select class="form-control show-tick"
+                                                        name="anomaly" ng-model="ctrl.config.anomalyHumPl">
+                                                    <option value="">Select the combination with an anomaly</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="3">Outliers
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="4">Missing
+                                                        values
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="5">Wrong value
+                                                        type
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="6">No
+                                                        combination
+                                                    </option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td ng-if="ctrl.config.eventHumPl == '1' ||ctrl.config.eventHumPl == '2'">
+                                                <label> For
+                                                    which room
+                                                    should the humidity rise/fall be simulated:*</label>
+                                            </td>
+                                            <td ng-if="ctrl.config.eventHumPl == '1' ||ctrl.config.eventHumPl == '2'">
+                                                <select class="form-control show-tick"
+                                                        name="room" ng-model="ctrl.config.roomHumPl">
+                                                    <option value="">Select a room</option>
+                                                    <option ng-option class="ng-binding ng-scope" value="a">Living room
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="b">Office
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="c">Bedroom
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="d">Bathroom
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="e">Kitchen
+                                                    </option>
+                                                    <option ng-option class="ng-binding ng-scope" value="f">Basement
+                                                    </option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="form-line"
+                                     ng-if="ctrl.selectedSensors.includes('TESTING_HumiditySensorPl') || ctrl.selectedSensors.includes('TESTING_TemperatureSensorPl')">
+
+                                    <h3>Configuration Planned Simulation</h3>
+                                    <table class="table parameter-table">
+                                        <thead></thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><label>Simulation time:*</label></td>
+                                            <td>
+                                                <div>
+                                                    <input class="form-control" type="text" id="simTime"
+                                                           ng-model="ctrl.config.simTime" placeholder="hours"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><label>Amount events to be simulated:*</label></td>
+                                            <td><input class="form-control" type="number" id="amountEvents"
+                                                       name="amountEvents"
+                                                       ng-model="ctrl.config.amountEvents"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><label>Amount anomalies to be simulated:*</label></td>
+                                            <td><input class="form-control" type="number" id="amountAnomalies"
+                                                       name="amountAnomalies"
+                                                       ng-model="ctrl.config.amountAnomalies"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
+                                <!-- item.rules group -->
+                                <div class="form-group" ng-class="{'has-error' : addTestCtrl.item.errors.rules }">
+                                    <div class="form-line"
+                                         ng-class="{'focused error' : addTestCtrl.item.errors.rules }">
+                                        <h3> Which rules should be observed?*</h3>
+                                        <select class="form-control selectpicker" title="Rules"
+                                                data-header="Rules to be observed"
+                                                ng-options="rule._links.self.href as (rule.name) for rule in ctrl.ruleList"
+                                                ng-model="ctrl.rules" multiple>
+                                        </select>
+                                    </div>
+                                    <span class="help-block"
+                                          ng-show="addTestCtrl.item.errors.rules">{{addTestCtrl.item.errors.rules}}</span>
+                                </div>
+                                <!-- item.triggerRules group radio button -->
+                                <div class="form-group">
+                                    <div class="radio">
+                                        <input type="radio" class="with-gap" id="trigger_rules"
+                                               ng-model="ctrl.executeRules"
+                                               value="true"/>
+                                        <label for="trigger_rules">The selected rules should be triggered. *</label>
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio" class="with-gap" id="not_trigger_rules"
+                                               ng-model="ctrl.executeRules"
+                                               value="false"/>
+                                        <label for="not_trigger_rules">The selected rules shouldn't be
+                                            triggered. *</label>
+                                    </div>
+                                </div>
+                                <!-- item.accessControlPolicyIds group -->
+                                <div class="form-group"
+                                     ng-class="{'has-error' : addTestCtrl.item.errors.accessControlPolicyIds }">
+                                    <div class="form-line"
+                                         ng-class="{'focused error' : addTestCtrl.item.errors.accessControlPolicyIds }">
+                                        <select multiple class="form-control selectpicker"
+                                                title="Access Control Policies"
+                                                data-header="Access Control Policies"
+                                                ng-model="addTestCtrl.item.accessControlPolicyIds"
+                                                ng-options="p.id as (p.name) for p in ctrl.accessControlPolicyList">
+                                            <option value="">Select access control policies
+                                        </select>
+                                    </div>
+                                    <span class="help-block"
+                                          ng-show="addTestCtrl.item.errors.accessControlPolicyIds">{{addTestCtrl.item.errors.accessControlPolicyIds}}</span>
+                                </div>
+                                <span class="help-block"
+                                      style="font-style: italic">Fields with * are mandatory.</span>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary m-t-0 waves-effect"
+                                        data-dismiss="modal">
+                                    Close
+                                </button>
+                                <button type="submit" class="btn btn-primary m-t-0 waves-effect">Register</button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- #END# Modal -->
+    </div>
+
+
+</div>
+

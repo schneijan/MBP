@@ -1,0 +1,122 @@
+<div class="row clearfix">
+    <div class="col-lg-12">
+        <div class="row clearfix">
+
+            <!-- Models Count -->
+            <a href="view/env-models">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="info-box hover-zoom-effect" style="cursor: pointer;">
+                        <div class="icon bg-mbp-blue">
+                            <i class="material-icons">view_quilt</i>
+                        </div>
+                        <div class="content">
+                            <div class="text">Environment Models</div>
+                            <div class="number count-to" data-from="0" data-to="{{ctrl.countEnvModels}}"
+                                 data-speed="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Devices Count -->
+            <a href="view/devices">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="info-box hover-zoom-effect" style="cursor: pointer;">
+                        <div class="icon bg-mbp-mid-blue">
+                            <i class="material-icons">devices</i>
+                        </div>
+                        <div class="content">
+                            <div class="text">Devices</div>
+                            <div class="number count-to" data-from="0" data-to="{{ctrl.countDevices}}"
+                                 data-speed="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Sensors Count -->
+            <a href="view/sensors">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="info-box hover-zoom-effect" style="cursor: pointer;">
+                        <div class="icon bg-mbp-light-salmon">
+                            <i class="material-icons">settings_remote</i>
+                        </div>
+                        <div class="content">
+                            <div class="text">Sensors</div>
+                            <div class="number count-to" data-from="0" data-to="{{ctrl.countSensors}}"
+                                 data-speed="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Actuators Count -->
+            <a href="view/actuators">
+                <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12">
+                    <div class="info-box hover-zoom-effect" style="cursor: pointer;">
+                        <div class="icon bg-mbp-mid-champagne">
+                            <i class="material-icons">wb_incandescent</i>
+                        </div>
+                        <div class="content">
+                            <div class="text">Actuators</div>
+                            <div class="number count-to" data-from="0" data-to="{{ctrl.countActuators}}"
+                                 data-speed="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="header">
+                <h2 class="ng-binding" style="font-size:26px;">
+                    Welcome to the MBP!
+                </h2>
+                <ul class="header-dropdown m-r--5">
+                    <li>
+                        <a class="clickable" data-toggle="collapse" data-target="#welcome-card-body">
+                            <i class="material-icons">keyboard_arrow_down</i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div id="welcome-card-body" class="body collapse" ng-class="{'in': ctrl.showWelcomeCard}">
+                <div style="background-color:white;font-size: 18px;">
+                    <p>We are happy that you have chosen the MBP to manage your IoT
+                        devices!</p><br/>
+                    <p>Let's start to set up your IoT environment in only six steps:</p>
+                    <p> 1. <a href="view/devices" target="_blank"><i class="material-icons">devices</i>&nbsp;
+                        Register the IoT devices</a> of your environment. Optionally, you can register <a
+                            href="view/key-pairs" target="_blank"><i class="material-icons">vpn_key</i>&nbsp;
+                        Key Pairs</a> to be used by the MBP to access your IoT devices remotely.</p>
+                    <p> 2. <a href="view/operators" target="_blank"><i class="material-icons">description</i>&nbsp;
+                        Create extraction/control operators</a> for your sensors and actuators. Control operators are
+                        only required if there are actuators in your environment. For each operator a
+                        <a href="view/data-models" target="_blank">data model</a> must be selected which must be
+                        created beforehand.</p>
+                    <p> 3. <a href="view/sensors" target="_blank"><i class="material-icons">settings_remote</i>&nbsp;
+                        Register sensors</a> and <a href="view/actuators" target="_blank"><i class="material-icons">wb_incandescent</i>&nbsp;actuators</a>
+                        that are connected to your devices, by selecting a target device and an operator.</p>
+                    <p> 4. <a href="view/sensors" target="_blank"><i class="material-icons">file_download</i>&nbsp;Install
+                        operators for your sensors</a> and <a href="view/actuators" target="_blank">actuators</a> on
+                        target devices.</p>
+                    <p> 5. <a href="view/sensors" target="_blank"><i class="material-icons">play_arrow</i>&nbsp;Start
+                        your sensors</a> and <a href="view/actuators" target="_blank">actuators</a>.</p>
+                    <p> 6. <a href="view/rules" target="_blank"><i class="material-icons">call_split</i>&nbsp;Define
+                        rules</a> that make your environment smart and allow it to react to certain conditions.</p>
+                    <br/>
+                    <p>As an alternative, you can use the <a href="view/env-models" target="_blank"><i
+                            class="material-icons">view_quilt</i>&nbsp;Environment Modeling Tool</a> to set up your
+                        IoT environment at once.</p>
+                    <br/>
+                    <p><a class="btn btn-info btn-lg" href="https://github.com/IPVS-AS/MBP/wiki" target="_blank"
+                          role="button">Learn more about the MBP</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

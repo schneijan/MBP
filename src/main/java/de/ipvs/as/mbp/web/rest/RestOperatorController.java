@@ -1,8 +1,10 @@
 package de.ipvs.as.mbp.web.rest;
 
+import de.ipvs.as.mbp.constants.Constants;
 import de.ipvs.as.mbp.domain.operator.Operator;
+import de.ipvs.as.mbp.domain.operator.OperatorRequestDTO;
+import de.ipvs.as.mbp.repository.DataModelRepository;
 import io.swagger.annotations.*;
-import de.ipvs.as.mbp.RestConfiguration;
 import de.ipvs.as.mbp.domain.access_control.ACAccessRequest;
 import de.ipvs.as.mbp.domain.access_control.ACAccessType;
 import de.ipvs.as.mbp.error.EntityAlreadyExistsException;
@@ -30,12 +32,15 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * @author Jakob Benz
  */
 @RestController
-@RequestMapping(RestConfiguration.BASE_PATH + "/operators")
+@RequestMapping(Constants.BASE_PATH + "/operators")
 @Api(tags = {"Operators"})
 public class RestOperatorController {
 
     @Autowired
     private OperatorRepository operatorRepository;
+
+    @Autowired
+    private DataModelRepository dataModelRepository;
 
     @Autowired
     private UserEntityService userEntityService;
@@ -81,7 +86,17 @@ public class RestOperatorController {
     public ResponseEntity<EntityModel<Operator>> create(
             @RequestHeader("X-MBP-Access-Request") String accessRequestHeader,
             @ApiParam(value = "Page parameters", required = true) Pageable pageable,
-            @RequestBody Operator operator) throws EntityAlreadyExistsException, EntityNotFoundException {
+            @RequestBody OperatorRequestDTO requestDTO) throws EntityAlreadyExistsException, EntityNotFoundException {
+        // Create operator from request DTO
+        Operator operator = (Operator) new Operator()
+                .setName(requestDTO.getName())
+                .setDataModel(requestDTO.getDataModelId() == null ? null : userEntityService.getForId(dataModelRepository, requestDTO.getDataModelId()))
+                .setDescription(requestDTO.getDescription())
+                .setParameters(requestDTO.getParameters())
+                .setRoutines(requestDTO.getRoutines())
+                .setUnit(requestDTO.getUnit())
+                .setAccessControlPolicyIds(requestDTO.getAccessControlPolicyIds());
+
         //Replace bad line breaks of plain text operator files
         operator.replaceLineBreaks();
 

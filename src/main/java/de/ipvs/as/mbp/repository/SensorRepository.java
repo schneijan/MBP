@@ -1,10 +1,17 @@
 package de.ipvs.as.mbp.repository;
 
 import de.ipvs.as.mbp.domain.component.Sensor;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 //@RepositoryRestResource(collectionResourceRel = "sensors", path = "sensors")
 //@Api(tags = {"Sensor entities"}, description = "CRUD for sensor entities")
+@Repository
 public interface SensorRepository extends ComponentRepository<Sensor> {
+
+    Optional<Sensor> findFirstByName(@Param("name") String name);
 //    @Override
 //    @PreAuthorize("@repositorySecurityGuard.checkPermission(#sensor, 'delete')")
 //    @ApiOperation(value = "Deletes a sensor entity", produces = "application/hal+json")

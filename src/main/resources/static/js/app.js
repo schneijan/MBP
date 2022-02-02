@@ -1,6 +1,6 @@
 'use strict';
 
-let app = angular.module('app', ['ngRoute', 'ngResource', 'ngCookies', 'ngSanitize', 'smart-table', 'ui.bootstrap', 'ngFileUpload', 'thatisuday.dropzone']);
+let app = angular.module('app', ['ngRoute', 'ngResource', 'ngCookies', 'ngSanitize', 'smart-table', 'ui.bootstrap', 'ngFileUpload', 'thatisuday.dropzone', 'jsonFormatter']);
 
 app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvider', 'dropzoneOpsProvider',
     function ($provide, $routeProvider, $locationProvider, $resourceProvider, dropzoneOpsProvider) {
@@ -302,7 +302,7 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
-            // Sensors List and Register (includes Device List and Register)
+            // Sensors list
             .when(viewPrefix + '/sensors', {
                 category: 'sensors',
                 templateUrl: 'templates/sensors',
@@ -344,7 +344,7 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
-            //Devices list and register
+            //Devices list
             .when(viewPrefix + '/devices', {
                 category: 'devices',
                 templateUrl: 'templates/devices',
@@ -390,6 +390,114 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
+            //Device templates
+            .when(viewPrefix + '/device-templates', {
+                category: 'device-templates',
+                templateUrl: 'templates/device-templates',
+                controller: 'DeviceTemplateListController as ctrl',
+                resolve: {
+                    requestTopicList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('discovery/request-topics', 'requestTopics');
+                    }],
+                    deviceTemplateList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('discovery/device-templates', 'deviceTemplates');
+                    }],
+                    addDeviceTemplate: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'discovery/device-templates');
+                    }],
+                    updateDeviceTemplate: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.updateOne, 'discovery/device-templates');
+                    }],
+                    deleteDeviceTemplate: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'discovery/device-templates');
+                    }],
+                    locationTemplateList: ['HttpService', function (HttpService) {
+                        return HttpService.getAllTypes('discovery/location-templates', {
+                            "informalLocationTemplates": "Informal",
+                            "pointLocationTemplates": "Point",
+                            "circleLocationTemplates": "Circle",
+                            "polygonLocationTemplates": "Polygon"
+                        });
+                    }],
+                    addLocationTemplate: ['HttpService', function (HttpService) {
+                        return {
+                            "Informal": angular.bind(this, HttpService.addOne, 'discovery/location-templates/informal'),
+                            "Point": angular.bind(this, HttpService.addOne, 'discovery/location-templates/point'),
+                            "Circle": angular.bind(this, HttpService.addOne, 'discovery/location-templates/circle'),
+                            "Polygon": angular.bind(this, HttpService.addOne, 'discovery/location-templates/polygon')
+                        }
+                    }],
+                    updateLocationTemplate: ['HttpService', function (HttpService) {
+                        return {
+                            "Informal": angular.bind(this, HttpService.updateOne, 'discovery/location-templates/informal'),
+                            "Point": angular.bind(this, HttpService.updateOne, 'discovery/location-templates/point'),
+                            "Circle": angular.bind(this, HttpService.updateOne, 'discovery/location-templates/circle'),
+                            "Polygon": angular.bind(this, HttpService.updateOne, 'discovery/location-templates/polygon')
+                        }
+                    }],
+                    deleteLocationTemplate: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'discovery/location-templates');
+                    }]
+                }
+            })
+
+            //Request topic list
+            .when(viewPrefix + '/request-topics', {
+                category: 'request-topics',
+                templateUrl: 'templates/request-topics',
+                controller: 'RequestTopicListController as ctrl',
+                resolve: {
+                    requestTopicList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('discovery/request-topics', 'requestTopics');
+                    }],
+                    addRequestTopic: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'discovery/request-topics');
+                    }],
+                    deleteRequestTopic: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'discovery/request-topics');
+                    }]
+                }
+            })
+
+            //Dynamic deployment list
+            .when(viewPrefix + '/dynamic-deployments', {
+                category: 'dynamic-deployments',
+                templateUrl: 'templates/dynamic-deployments',
+                controller: 'DynamicDeploymentListController as ctrl',
+                resolve: {
+                    dynamicDeploymentList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('discovery/dynamic-deployments', 'dynamicDeployments');
+                    }],
+                    addDynamicDeployment: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'discovery/dynamic-deployments');
+                    }],
+                    deleteDynamicDeployment: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'discovery/dynamic-deployments');
+                    }],
+                    operatorList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('operators');
+                    }],
+                    deviceTemplateList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('discovery/device-templates', 'deviceTemplates');
+                    }]
+                }
+            })
+
+            //Dynamic deployment details
+            .when(viewPrefix + '/dynamic-deployments/:id', {
+                category: 'dynamic-deployments',
+                templateUrl: 'templates/dynamic-deployments-id',
+                controller: 'DynamicDeploymentDetailsController as ctrl',
+                resolve: {
+                    dynamicDeploymentDetails: ['$route', 'HttpService', function ($route, HttpService) {
+                        return HttpService.getOne('discovery/dynamic-deployments', $route.current.params.id);
+                    }],
+                    discoveryLogs: ['$route', 'DiscoveryService', function ($route, DiscoveryService) {
+                        return DiscoveryService.getDiscoveryLogs($route.current.params.id, 10, 0, "startTime,desc");
+                    }]
+                }
+            })
+
             //Operators list
             .when(viewPrefix + '/operators', {
                 category: 'operators',
@@ -402,11 +510,32 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                     operatorList: ['HttpService', function (HttpService) {
                         return HttpService.getAll('operators');
                     }],
+                    dataModelList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('data-models', 'dataModels');
+                    }],
                     addOperator: ['HttpService', function (HttpService) {
                         return angular.bind(this, HttpService.addOne, 'operators');
                     }],
                     deleteOperator: ['HttpService', function (HttpService) {
                         return angular.bind(this, HttpService.deleteOne, 'operators');
+                    }]
+                }
+            })
+
+            //Data model lists
+            .when(viewPrefix + '/data-models', {
+                category: 'data-models',
+                templateUrl: 'templates/data-models',
+                controller: 'DataModelListController as ctrl',
+                resolve: {
+                    dataModelList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('data-models', 'dataModels');
+                    }],
+                    addDataModel: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.addOne, 'data-models');
+                    }],
+                    deleteDataModel: ['HttpService', function (HttpService) {
+                        return angular.bind(this, HttpService.deleteOne, 'data-models');
                     }]
                 }
             })
@@ -423,6 +552,9 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                     parameterTypesList: () => parameterTypes,
                     monitoringOperatorList: ['HttpService', function (HttpService) {
                         return HttpService.getAll('monitoring-operators');
+                    }],
+                    dataModelList: ['HttpService', function (HttpService) {
+                        return HttpService.getAll('data-models', 'dataModels');
                     }],
                     addMonitoringOperator: ['HttpService', function (HttpService) {
                         return angular.bind(this, HttpService.addOne, 'monitoring-operators');
@@ -529,7 +661,7 @@ app.config(['$provide', '$routeProvider', '$locationProvider', '$resourceProvide
                 }
             })
 
-            //Testing-Tool
+            //Testing tool
             .when(viewPrefix + '/testing-tool', {
                 category: 'test-details',
                 templateUrl: 'templates/testing-tool',

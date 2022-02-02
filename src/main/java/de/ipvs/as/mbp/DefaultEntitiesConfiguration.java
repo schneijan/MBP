@@ -38,7 +38,7 @@ public class DefaultEntitiesConfiguration {
      */
     @Bean(name = "defaultOperatorWhitelist")
     public List<String> defaultOperatorWhitelist() {
-        List<String> operatorPaths = Arrays.asList("/operators/extraction/temperature_stub");
+        List<String> operatorPaths = Collections.singletonList("/operators/extraction/temperature_stub");
         return Collections.unmodifiableList(operatorPaths);
     }
 
@@ -56,18 +56,6 @@ public class DefaultEntitiesConfiguration {
                 "/operators/extraction/simulators/sensoradapter_hum_planned",
                 "/operators/control/simulators/actuator_adapter_testing"
         );
-        return Collections.unmodifiableList(operatorPaths);
-    }
-
-    /**
-     * Creates a bean representing a whitelist of paths to directories of operators that are supposed
-     * to be available as default operators for test reruns.
-     *
-     * @return The path whitelist bean
-     */
-    @Bean(name = "defaultRerunOperatorWhitelist")
-    public List<String> defaultRerunOperatorWhitelist() {
-        List<String> operatorPaths = Arrays.asList("/operators/extraction/simulators/rerun_adapter");
         return Collections.unmodifiableList(operatorPaths);
     }
 

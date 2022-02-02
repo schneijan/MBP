@@ -8,7 +8,7 @@ app.controller('TestingDetailsController',
         function ($scope, $controller, TestService, testingDetails, sensorList, $rootScope, $routeParams, $interval, UnitService, NotificationService, $http, HttpService, ENDPOINT_URI, ruleList) {
             //Initialization of variables that are used in the frontend by angular
             const vm = this;
-            vm.ruleList = [];
+            vm.ruleList = ruleList;
             vm.test = testingDetails;
             vm.executeRules = true;
             vm.sensorType = testingDetails.type;
@@ -16,12 +16,11 @@ app.controller('TestingDetailsController',
 
             // ID of the Test
             const COMPONENT_ID = $routeParams.id;
-            const RERUN_PREFIX = "RERUN_";
             // Constant list of the sensor simulators, that can be included in the test
-            const SIMULATOR_LIST = ['TestingTemperatureSensor',
-                'TestingTemperatureSensorPl',
-                'TestingHumiditySensor',
-                'TestingHumiditySensorPl'];
+            const SIMULATOR_LIST = ['TESTING_TemperatureSensor',
+                'TESTING_TemperatureSensorPl',
+                'TESTING_HumiditySensor',
+                'TESTING_HumiditySensorPl'];
 
 
             // Storing variables
@@ -71,28 +70,15 @@ app.controller('TestingDetailsController',
                     }
                 }
 
-                // Check if test is reusing data from the previous test
-                if (testingDetails.useNewData === false) {
-                    for (let sensorName in vm.sensorListTestNames) {
-                        for (let sensor in sensorList) {
-                            // If Test is in Rerun Mode only add the rerun sensors of the test to this list
-                            if (sensorList[sensor].name === RERUN_PREFIX + vm.sensorListTestNames[sensorName]) {
-                                vm.sensorListTest.push(sensorList[sensor]);
-                            }
-                        }
-                    }
-                } else {
-                    for (let sensor in sensorList) {
-                        if (testingDetails.type.indexOf(sensorList[sensor].name) !== -1) {
-                            vm.sensorListTest.push(sensorList[sensor]);
-                            vm.sensorListTestNames.push(sensorList[sensor].name);
-                        }
+                for (let sensor in sensorList) {
+                    if (testingDetails.type.indexOf(sensorList[sensor].name) !== -1) {
+                        vm.sensorListTest.push(sensorList[sensor]);
+                        vm.sensorListTestNames.push(sensorList[sensor].name);
                     }
                 }
+                //}
 
             }
-
-
 
 
             /**
@@ -141,14 +127,8 @@ app.controller('TestingDetailsController',
                 });
                 for (let i = 0; i < testingDetails.rules.length; i++) {
                     if (i === 0) {
-                        if (!testingDetails.rules[i].name.includes(RERUN_PREFIX)) {
-                            vm.ruleNames = vm.ruleNames + testingDetails.rules[i].name;
-                        }
                         vm.actionNames = vm.actionNames + testingDetails.rules[i].actionNames;
                     } else {
-                        if (!testingDetails.rules[i].name.includes(RERUN_PREFIX)) {
-                            vm.ruleNames = vm.ruleNames + ", " + testingDetails.rules[i].name;
-                        }
                         for (let x = 0; x < testingDetails.rules[i].actionNames.length; x++) {
                             if (vm.actionNames.includes(testingDetails.rules[i].actionNames[x])) {
 
@@ -169,7 +149,7 @@ app.controller('TestingDetailsController',
             function getPDFList() {
                 vm.pdfDetails = [];
                 TestService.getPDFList(COMPONENT_ID).then(function (response) {
-                    if(response.length > 0){
+                    if (response.length > 0) {
                         document.getElementById("ReuseSwitch").removeAttribute('disabled');
                     } else {
                         document.getElementById("ReuseSwitch").disabled = true;
@@ -190,7 +170,6 @@ app.controller('TestingDetailsController',
             }
 
 
-
             /**
              * [Public]
              *
@@ -206,12 +185,6 @@ app.controller('TestingDetailsController',
                 } else if (useNewData === false) {
                     useNewDataConfig = "true";
                 }
-
-                TestService.editConfig(COMPONENT_ID, useNewDataConfig).then(function () {
-                    window.location.reload();
-                    getTestSensorList();
-                    $scope.useNewDataSuccess = useNewData;
-                });
             }
 
 
@@ -279,8 +252,6 @@ app.controller('TestingDetailsController',
                         //TestReportService.generateReport(blob);
                     });
             }
-
-
 
 
             /**
@@ -544,8 +515,8 @@ app.controller('TestingDetailsController',
                 } else {
                     vm.executeRules = "false";
                 }
-
             }
+
 
             //Extend the controller object for the public functions to make them available from outside
             angular.extend(vm, $controller('TestingChartController as testingChartCtrl',
@@ -558,7 +529,8 @@ app.controller('TestingDetailsController',
                     historicalChartSlider: 'historicalChartSlider'
                 }), {
                 testReportCtrl: $controller('TestReportController as testReportCtrl',
-                    { $scope: $scope,
+                    {
+                        $scope: $scope,
                         openReport: $scope.openReport
                     }),
                 updateTestCtrl: $controller('UpdateItemController as updateTestCtrl', {
